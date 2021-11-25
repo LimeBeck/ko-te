@@ -2,12 +2,20 @@ package dev.limebeck.templateEngine.parser
 
 
 sealed interface LanguageToken {
+    data class TemplateSource(
+        val text: String
+    ) : LanguageToken
+
     data class Identifier(
         val name: String
     ) : LanguageToken
 
     data class Keyword(
         val name: String
+    ) : LanguageToken
+
+    data class Punctuation(
+        val value: String
     ) : LanguageToken
 
     data class Operation(

@@ -1,4 +1,5 @@
 import dev.limebeck.templateEngine.inputStream.toStream
+import dev.limebeck.templateEngine.parser.MustacheLikeLanguageParser
 import dev.limebeck.templateEngine.parser.MustacheLikeTemplateTokenizer
 import dev.limebeck.templateEngine.parser.TemplateToken
 import kotlin.test.Test
@@ -24,5 +25,26 @@ class TokenizerTest {
         assertEquals("\"\n", (tokens[4] as? TemplateToken.TemplateSource)?.text)
         assertEquals("obj", (tokens[5] as? TemplateToken.LanguagePart)?.text)
         assertEquals("another", (tokens[6] as? TemplateToken.LanguagePart)?.text)
+    }
+
+    @Test
+    fun parseLanguageTokensFromTemplate() {
+        val simpleTextTemplate = """
+            Hello, {{ name }}!
+            Object value: "{{ object.value }}"
+            {{ obj }}{{ another }}
+            {{
+                object.value
+            }} {{ let newValue="asdsad asdsad" }}
+            {{ let newValue=131213.12312 }}
+        """.trimIndent()
+        val stream = simpleTextTemplate.toStream()
+
+        val tokenizer = MustacheLikeTemplateTokenizer()
+        val tokens = tokenizer.analyze(stream)
+
+        val languageParser = MustacheLikeLanguageParser()
+        val languageTokens = languageParser.parse(tokens)
+        assertEquals(24, languageTokens.size)
     }
 }

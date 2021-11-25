@@ -7,7 +7,7 @@ interface TemplateTokenizer {
 }
 
 data class LexerError(
-    val path: String,
+    override val position: InputStream.Position,
     val col: Int?,
     val row: Int?,
     override val message: String
@@ -18,10 +18,6 @@ class MustacheLikeTemplateTokenizer(
     private val delimiterStartSymbol: String = "{{",
     private val delimiterEndSymbol: String = "}}"
 ) : TemplateTokenizer {
-    companion object {
-        val KEYWORDS = listOf("if", "else", "for", "in", "true", "false", "null", "endif")
-    }
-
     private fun RewindableInputStream<Char>.readLanguageParts(): List<TemplateToken.LanguagePart> {
         skipNext(delimiterStartSymbol.asIterable().toList())
         skipEmpty()
@@ -32,7 +28,12 @@ class MustacheLikeTemplateTokenizer(
 
         skipNext(delimiterEndSymbol.asIterable().toList())
 
-        return listOf(TemplateToken.LanguagePart(languageConstructions.trimEnd()))
+        return listOf(
+            TemplateToken.LanguagePart(
+                text = languageConstructions.trimEnd(),
+                position = currentPosition
+            )
+        )
     }
 
     private fun RewindableInputStream<Char>.readRawTemplate(): TemplateToken.TemplateSource? {
@@ -41,7 +42,10 @@ class MustacheLikeTemplateTokenizer(
         }
 
         return if (rawTemplate.isNotEmpty())
-            TemplateToken.TemplateSource(rawTemplate.joinToString(""))
+            TemplateToken.TemplateSource(
+                text = rawTemplate.joinToString(""),
+                position = currentPosition
+            )
         else
             null
     }
@@ -53,7 +57,7 @@ class MustacheLikeTemplateTokenizer(
                 tokens.add(it)
             }
 
-            (stream as? CharInputStream)?.debug()
+//            (stream as? CharInputStream)?.debug()
 
             if (stream.hasNext()) {
                 stream.readLanguageParts().let {

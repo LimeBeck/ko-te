@@ -14,6 +14,9 @@ class CharInputStream(private val string: String) : RewindableInputStream<Char> 
     }
 
     override fun peek(): Char {
+        if (position.absolutePosition >= string.length) {
+            throw StreamError(position, "<e0920d18> Invalid position. Max allowed absolutePosition - ${string.length - 1}")
+        }
         return string[position.absolutePosition]
     }
 
@@ -62,7 +65,7 @@ class CharInputStream(private val string: String) : RewindableInputStream<Char> 
     }
 
     override fun hasNext(): Boolean =
-        string.length != position.absolutePosition + 1
+        string.length > position.absolutePosition
 
     override val currentPosition: StringPosition
         get() = position
