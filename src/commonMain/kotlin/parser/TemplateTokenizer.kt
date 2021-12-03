@@ -8,8 +8,6 @@ interface TemplateTokenizer {
 
 data class LexerError(
     override val position: InputStream.Position,
-    val col: Int?,
-    val row: Int?,
     override val message: String
 ) : ParserError, Throwable(message)
 
@@ -19,6 +17,8 @@ class MustacheLikeTemplateTokenizer(
     private val delimiterEndSymbol: String = "}}"
 ) : TemplateTokenizer {
     private fun RewindableInputStream<Char>.readLanguageParts(): List<TemplateToken.LanguagePart> {
+        val startPosition = currentPosition.copy()
+
         skipNext(delimiterStartSymbol.asIterable().toList())
         skipEmpty()
 
@@ -31,12 +31,15 @@ class MustacheLikeTemplateTokenizer(
         return listOf(
             TemplateToken.LanguagePart(
                 text = languageConstructions.trimEnd(),
-                position = currentPosition
+                startPosition = startPosition,
+                endPosition = currentPosition
             )
         )
     }
 
     private fun RewindableInputStream<Char>.readRawTemplate(): TemplateToken.TemplateSource? {
+        val startPosition = currentPosition.copy()
+
         val rawTemplate = readUntil {
             !isNextSequenceEquals(delimiterStartSymbol.asIterable().toList())
         }
@@ -44,7 +47,8 @@ class MustacheLikeTemplateTokenizer(
         return if (rawTemplate.isNotEmpty())
             TemplateToken.TemplateSource(
                 text = rawTemplate.joinToString(""),
-                position = currentPosition
+                startPosition = startPosition,
+                endPosition = currentPosition
             )
         else
             null

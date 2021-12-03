@@ -21,6 +21,7 @@ interface InputStream<T> : Iterator<T> {
 
     interface Position {
         val absolutePosition: Int
+        fun copy(): Position
     }
 }
 

@@ -1,8 +1,5 @@
 package dev.limebeck.templateEngine.inputStream
 
-import dev.limebeck.templateEngine.parser.LexerError
-
-
 fun <T> InputStream<T>.readUntil(conditionBlock: (value: T) -> Boolean): List<T> {
     val result = mutableListOf<T>()
     while (hasNext() && conditionBlock(peek())) {
@@ -30,7 +27,7 @@ fun <T> RewindableInputStream<T>.isNextSequenceEquals(value: List<T>): Boolean {
     }
 
     value.forEach {
-        if (it != peek()) {
+        if (!hasNext() || it != peek()) {
             reset()
             return false
         } else
@@ -57,19 +54,85 @@ fun InputStream<Char>.skipEmpty() {
     }
 }
 
-fun <T> InputStream<T>.skipNext(values: List<T>) {
+fun <T, R> simpleComparator(value: R, next: T): Boolean {
+    return value == next
+}
+
+fun <T, R> InputStream<T>.skipNext(values: List<R>, comparator: (value: R, next: T) -> Boolean = ::simpleComparator) {
     values.fold(listOf<T>()) { acc, value ->
+        if (!hasNext())
+            throw StreamError(
+                message = "<17e0c3e5> Expected $values but got EOF at position $currentPosition",
+                position = currentPosition
+            )
         val result = acc + peek()
-        if (hasNext()) {
-            if (value == peek()) {
-                next()
-            } else {
-                throw StreamError(
-                    message = "<17e0c3e5> Expected $values but got $result at position $currentPosition",
-                    position = currentPosition
-                )
-            }
+        if (comparator(value, peek())) {
+            next()
+        } else {
+            throw StreamError(
+                message = "<17e0c3e5> Expected $values but got $result at position $currentPosition",
+                position = currentPosition
+            )
         }
         result
     }
+}
+
+data class SimplePosition(
+    override val absolutePosition: Int
+) : InputStream.Position {
+    override fun copy(): InputStream.Position = this.copy(absolutePosition = absolutePosition)
+}
+
+fun <T> Collection<T>.toStream(): RewindableInputStream<T> {
+    return object : RewindableInputStream<T> {
+        private var position: SimplePosition = SimplePosition(0)
+        private val collection = this@toStream
+        private var nextValue: T? = collection.firstOrNull()
+        private val collectionSize by lazy { collection.size }
+
+        override fun peek(): T {
+            if (!hasNext()) {
+                throw StreamError(
+                    position,
+                    "<e0920d18> Invalid position. Max allowed absolutePosition - ${collectionSize - 1}"
+                )
+            }
+            return nextValue!!
+        }
+
+        override fun next(): T {
+            val value = nextValue!!
+
+            seek(position.absolutePosition + 1)
+            nextValue = collection.elementAtOrNull(position.absolutePosition)
+
+            return value
+        }
+
+        override fun seek(absolutePosition: Int) {
+            position = position.copy(absolutePosition = absolutePosition)
+            nextValue = collection.elementAtOrNull(position.absolutePosition)
+        }
+
+        override fun hasNext(): Boolean = collection.size > position.absolutePosition
+
+        override val currentPosition: InputStream.Position
+            get() = position
+    }
+}
+
+fun <T> recoverable(stream: RewindableInputStream<*>, block: () -> T): T {
+    val recoverPosition = stream.currentPosition.absolutePosition
+    try {
+        return block()
+    } finally {
+        stream.seek(recoverPosition)
+    }
+}
+
+fun <T> InputStream<T>.peekOrNull(): T? = try {
+    peek()
+} catch (e: Throwable) {
+    null
 }

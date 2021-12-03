@@ -4,45 +4,48 @@ import dev.limebeck.templateEngine.inputStream.InputStream
 
 
 sealed interface LanguageToken {
-    val position: InputStream.Position
+    val startPosition: InputStream.Position
 
+    /**
+     * Any text behind `{{ ... }}`
+     */
     data class TemplateSource(
         val text: String,
-        override val position: InputStream.Position
+        override val startPosition: InputStream.Position
     ) : LanguageToken
 
     data class Identifier(
         val name: String,
-        override val position: InputStream.Position
+        override val startPosition: InputStream.Position
     ) : LanguageToken
 
     data class Keyword(
         val name: String,
-        override val position: InputStream.Position
+        override val startPosition: InputStream.Position
     ) : LanguageToken
 
     data class Punctuation(
         val value: String,
-        override val position: InputStream.Position
+        override val startPosition: InputStream.Position
     ) : LanguageToken
 
     data class Operation(
         val operation: String,
-        override val position: InputStream.Position
+        override val startPosition: InputStream.Position
     ) : LanguageToken
 
     data class StringValue(
         val value: String,
-        override val position: InputStream.Position
+        override val startPosition: InputStream.Position
     ) : LanguageToken
 
     data class NumericValue(
         val value: Number,
-        override val position: InputStream.Position
+        override val startPosition: InputStream.Position
     ) : LanguageToken
 
     data class Commentary(
         val comment: String,
-        override val position: InputStream.Position
+        override val startPosition: InputStream.Position
     ) : LanguageToken
 }

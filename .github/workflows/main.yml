@@ -30,11 +30,11 @@ jobs:
           distribution: 'temurin'
           java-version: '11'
 
-      - name: Build with Gradle
-        run: gradle :allTests
+      - name: Test with Gradle
+        run: ./gradlew :allTests
 
       - name: Build with Gradle
-        run: gradle build
+        run: ./gradlew build
 
       - name: Upload Unit Test Results
         if: always()
