@@ -3,7 +3,7 @@ package dev.limebeck.templateEngine.parser
 import dev.limebeck.templateEngine.inputStream.*
 
 interface LanguageParser {
-    fun parse(tokens: List<TemplateToken>): List<LanguageToken>
+    suspend fun parse(tokens: Sequence<TemplateToken>): Sequence<LanguageToken>
 }
 
 data class LanguageError(
@@ -23,92 +23,95 @@ class MustacheLikeLanguageParser : LanguageParser {
     private fun Char.isOperation(): Boolean = this in OPERATIONS
     private fun Char.isStringDef(): Boolean = this in listOf('"', '\'')
 
-    private fun String.isString(): Boolean {
-        return ALLOWED_STRING_DEFINITIONS.any { startsWith(it) }
-    }
-
-    private fun String.isIdentifier(): Boolean {
-        if (length < 1) return false
-        if (!this[0].isLetter()) return false
-        return true
-    }
-
-    private fun parseLanguageToken(token: TemplateToken.LanguagePart): List<LanguageToken> {
+    private fun parseLanguageToken(token: TemplateToken.LanguagePart): Sequence<LanguageToken> {
         val stream = token.text.toStream()
 
         stream.skipEmpty()
 
-        val tokens = mutableListOf<LanguageToken>()
-        while (stream.hasNext()) {
-            val nextChar = stream.peek()
-            when {
-                nextChar.isOperation() -> {
-                    tokens.add(LanguageToken.Operation(nextChar.toString()))
-                    stream.next()
-                }
-                nextChar.isPunctuation() -> {
-                    tokens.add(LanguageToken.Punctuation(nextChar.toString()))
-                    stream.next()
-                }
-                KEYWORDS.any { stream.isNextSequenceEquals(it.toList()) } -> {
-                    val keyword = stream.readUntil { !it.isWhitespace() }.joinToString("")
-                    tokens.add(LanguageToken.Keyword(keyword))
-                }
-                ALLOWED_STRING_DEFINITIONS.any { stream.isNextSequenceEquals(it.toList()) } -> {
-                    stream.readUntil { it.isStringDef() }
-                    val string = stream.readUntil { !it.isStringDef() }.joinToString("")
-                    tokens.add(LanguageToken.StringValue(string))
-                }
-                nextChar.isDigit() -> {
-                    var hasPointInside = false
-                    val digit = stream.readUntil {
-                        if (it == '.') {
-                            if (!hasPointInside) {
-                                hasPointInside = true
-                                return@readUntil true
-                            } else {
-                                throw LanguageError(
-                                    position = token.position,
-                                    message = "<1ac7d0b6> Unexpected point inside number ${token.text}"
-                                )
-                            }
-                        }
-                        it.isDigit()
-                    }.joinToString("")
-                    tokens.add(
-                        LanguageToken.NumericValue(
-                            value = if (hasPointInside) digit.toFloat() else digit.toInt()
-                        )
-                    )
-                }
-                nextChar.isLetter() -> {
-                    val identifier = stream.readUntil {
-                        !it.isWhitespace()
-                                && !it.isPunctuation()
-                                && !it.isOperation()
-                                && !it.isStringDef()
+        return sequence {
+            while (stream.hasNext()) {
+                val nextChar = stream.peek()
+                when {
+                    nextChar.isOperation() -> {
+                        yield(LanguageToken.Operation(nextChar.toString(), position = token.position))
+                        stream.next()
                     }
-                    stream.debug()
-                    tokens.add(LanguageToken.Identifier(identifier.joinToString("")))
+                    nextChar.isPunctuation() -> {
+                        yield(LanguageToken.Punctuation(nextChar.toString(), position = token.position))
+                        stream.next()
+                    }
+                    KEYWORDS.any { stream.isNextSequenceEquals(it.toList() + ' ') } -> {
+                        val keyword = stream.readUntil { !it.isWhitespace() }.joinToString("")
+                        yield(LanguageToken.Keyword(keyword, position = token.position))
+                    }
+                    ALLOWED_STRING_DEFINITIONS.any { stream.isNextSequenceEquals(it.toList()) } -> {
+                        stream.readUntil { it.isStringDef() }
+                        val string = stream.readUntil { !it.isStringDef() }.joinToString("")
+                        yield(LanguageToken.StringValue(string, position = token.position))
+                    }
+                    nextChar.isDigit() -> {
+                        var hasPointInside = false
+                        val digit = stream.readUntil {
+                            if (it == '.') {
+                                if (!hasPointInside) {
+                                    hasPointInside = true
+                                    return@readUntil true
+                                } else {
+                                    throw LanguageError(
+                                        position = token.position,
+                                        message = "<1ac7d0b6> Unexpected point inside number ${token.text}"
+                                    )
+                                }
+                            }
+                            it.isDigit()
+                        }.joinToString("")
+                        yield(
+                            LanguageToken.NumericValue(
+                                value = if (hasPointInside) digit.toFloat() else digit.toInt(),
+                                position = token.position
+                            )
+                        )
+                    }
+                    nextChar.isLetter() -> {
+                        val identifier = stream.readUntil {
+                            !it.isWhitespace()
+                                    && !it.isPunctuation()
+                                    && !it.isOperation()
+                                    && !it.isStringDef()
+                        }
+                        stream.debug()
+                        yield(
+                            LanguageToken.Identifier(
+                                name = identifier.joinToString(""),
+                                position = token.position
+                            )
+                        )
+                    }
+                    else -> {
+                        throw LanguageError(
+                            position = token.position,
+                            message = "<4bf66c83> Unexpected token ${token.text}"
+                        )
+                    }
                 }
-                else -> {
-                    throw LanguageError(
-                        position = token.position,
-                        message = "<4bf66c83> Unexpected token ${token.text}"
-                    )
-                }
-            }
 
-            stream.skipEmpty()
+                stream.skipEmpty()
+            }
         }
-        return tokens
     }
 
-    override fun parse(tokens: List<TemplateToken>): List<LanguageToken> {
-        return tokens.flatMap { token ->
-            when (token) {
-                is TemplateToken.TemplateSource -> listOf(LanguageToken.TemplateSource(token.text))
-                is TemplateToken.LanguagePart -> parseLanguageToken(token)
+    override suspend fun parse(tokens: Sequence<TemplateToken>): Sequence<LanguageToken> {
+        return sequence {
+            tokens.forEach { token ->
+                when (token) {
+                    is TemplateToken.TemplateSource -> yield(
+                        LanguageToken.TemplateSource(
+                            token.text,
+                            position = token.position
+                        )
+                    )
+                    is TemplateToken.LanguagePart -> yieldAll(parseLanguageToken(token))
+                }
             }
         }
     }

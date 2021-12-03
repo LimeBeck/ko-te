@@ -2,6 +2,7 @@ import dev.limebeck.templateEngine.inputStream.toStream
 import dev.limebeck.templateEngine.parser.MustacheLikeLanguageParser
 import dev.limebeck.templateEngine.parser.MustacheLikeTemplateTokenizer
 import dev.limebeck.templateEngine.parser.TemplateToken
+import utils.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -28,7 +29,7 @@ class TokenizerTest {
     }
 
     @Test
-    fun parseLanguageTokensFromTemplate() {
+    fun parseLanguageTokensFromTemplate() = runTest {
         val simpleTextTemplate = """
             Hello, {{ name }}!
             Object value: "{{ object.value }}"
@@ -36,7 +37,7 @@ class TokenizerTest {
             {{
                 object.value
             }} {{ let newValue="asdsad asdsad" }}
-            {{ let newValue=131213.12312 }}
+            {{ let newValue=131213.12312 }}{{ let data=asdasd+1+2 }}{{ letif}}
         """.trimIndent()
         val stream = simpleTextTemplate.toStream()
 
@@ -44,7 +45,7 @@ class TokenizerTest {
         val tokens = tokenizer.analyze(stream)
 
         val languageParser = MustacheLikeLanguageParser()
-        val languageTokens = languageParser.parse(tokens)
-        assertEquals(24, languageTokens.size)
+        val languageTokens = languageParser.parse(tokens.asSequence())
+        assertEquals(33, languageTokens.toList().size)
     }
 }

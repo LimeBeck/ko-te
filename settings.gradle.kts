@@ -1,3 +1,8 @@
+rootProject.name = "ko-te"
 
-rootProject.name = "template-engine"
-
+pluginManagement {
+    val kotlinVersion: String by settings
+    plugins {
+        kotlin("multiplatform") version kotlinVersion
+    }
+}

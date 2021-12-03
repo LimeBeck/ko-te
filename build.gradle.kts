@@ -1,5 +1,26 @@
 plugins {
-    kotlin("multiplatform") version "1.5.10"
+    kotlin("multiplatform")
+    id("maven-publish")
+}
+
+val kotlinCoroutinesVersion: String by project
+
+publishing {
+    repositories {
+        maven {
+            name = "MainRepo"
+            url = uri(
+                project.findProperty("repo.uri") as String?
+                    ?: System.getenv("REPO_URI")
+            )
+            credentials {
+                username = project.findProperty("repo.username") as String?
+                    ?: System.getenv("REPO_USERNAME")
+                password = project.findProperty("repo.password") as String?
+                    ?: System.getenv("REPO_PASSWORD")
+            }
+        }
+    }
 }
 
 group = "dev.limebeck"
@@ -20,6 +41,7 @@ kotlin {
     }
 
     js(IR) {
+//        useCommonJs()
         binaries.executable()
         nodejs {
         }
@@ -37,6 +59,11 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${kotlinCoroutinesVersion}") {
+                    version {
+                        strictly(kotlinCoroutinesVersion)
+                    }
+                }
             }
         }
         val commonTest by getting {
@@ -45,10 +72,27 @@ kotlin {
             }
         }
         val jvmMain by getting
-        val jvmTest by getting
-        val jsMain by getting
-        val jsTest by getting
-        val nativeMain by getting
+        val jvmTest by getting {
+            dependencies {
+            }
+        }
+        val jsMain by getting {
+            dependencies {// https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core-js
+//                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-js:1.6.0-RC")
+                implementation(kotlin("stdlib-js"))
+
+            }
+        }
+        val jsTest by getting {
+            dependencies {
+                implementation(kotlin("test-js"))
+            }
+        }
+        val nativeMain by getting {
+            dependencies {
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinCoroutinesVersion")
+            }
+        }
         val nativeTest by getting
     }
 }
