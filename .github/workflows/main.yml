@@ -33,8 +33,14 @@ jobs:
       - name: Understand where am i
         run: pwd && ls -lah
 
-      - name: Test with Gradle
-        run: ./gradlew :allTests
+      - name: Test JVM with Gradle
+        run: ./gradlew :jvmTest
+
+      - name: Test JS with Gradle
+        run: ./gradlew :jsNodeTest
+
+      - name: Test Native with Gradle
+        run: ./gradlew :nativeTest
 
       - name: Build with Gradle
         run: ./gradlew build
