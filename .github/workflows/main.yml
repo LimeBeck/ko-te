@@ -30,6 +30,9 @@ jobs:
           distribution: 'temurin'
           java-version: '11'
 
+      - name: Understand where am i
+        run: pwd && ls -lah
+
       - name: Test with Gradle
         run: ./gradlew :allTests
 
@@ -41,10 +44,10 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: Unit Test Results
-          path: build/test-results/**/*.xml
+          path: /home/runner/work/ko-te/ko-te/build/test-results/**/*.xml
 
       - name: Publish to GitHub Packages
-        run: gradle publish
+        run: ./gradlew publish
         env:
           USERNAME: ${{ github.actor }}
           PASSWORD: ${{ secrets.GITHUB_TOKEN }}
