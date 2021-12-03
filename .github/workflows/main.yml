@@ -46,6 +46,10 @@ jobs:
           name: Unit Test Results
           path: /home/runner/work/ko-te/ko-te/build/test-results/**/*.xml
 
+      - name: Understand where is test reports
+        if: always()
+        run: ls -lah ./build/test-results/**
+
       - name: Publish to GitHub Packages
         run: ./gradlew publish
         env:
