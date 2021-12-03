@@ -34,12 +34,15 @@ jobs:
         run: pwd && ls -lah
 
       - name: Test JVM with Gradle
+        if: always()
         run: ./gradlew :jvmTest
 
       - name: Test JS with Gradle
+        if: always()
         run: ./gradlew :jsNodeTest
 
       - name: Test Native with Gradle
+        if: always()
         run: ./gradlew :nativeTest
 
       - name: Build with Gradle
