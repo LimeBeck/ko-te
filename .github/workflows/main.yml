@@ -31,6 +31,9 @@ jobs:
           java-version: '11'
 
       - name: Build with Gradle
+        run: gradle :allTests
+
+      - name: Build with Gradle
         run: gradle build
 
       - name: Upload Unit Test Results
@@ -48,7 +51,7 @@ jobs:
 
   publish-test-results:
     name: "Publish Unit Tests Results"
-    needs: build-and-test
+    needs: build
     runs-on: ubuntu-latest
     if: always()
 
