@@ -33,6 +33,7 @@ jobs:
       - uses: actions/cache@v2
         with:
           path: |
+            ./.gradle/
             ~/.gradle/caches
             ~/.gradle/wrapper
             ~/.konan/
@@ -45,15 +46,15 @@ jobs:
 
       - name: Test JVM with Gradle
         if: always()
-        run: ./gradlew :jvmTest
+        run: ./gradlew :jvmTest -i
 
       - name: Test JS with Gradle
         if: always()
-        run: ./gradlew :jsNodeTest
+        run: ./gradlew :jsNodeTest -i
 
       - name: Test Native with Gradle
         if: always()
-        run: ./gradlew :nativeTest
+        run: ./gradlew :nativeTest -i
 
       - name: Build with Gradle
         run: ./gradlew build
