@@ -17,4 +17,12 @@ Multiline block: {{
     let second = 30
     first + second
 }}
+Conditional template: {{if( 1 == 2 )}} true {{ else }} false {{ endif }}
+Conditional value: {{
+    if( 1 == 2 ) 
+        true 
+    else 
+        false 
+    endif 
+}}
 ```

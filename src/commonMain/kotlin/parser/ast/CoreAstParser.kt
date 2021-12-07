@@ -14,6 +14,9 @@ object CoreAstParser : AstLexemeParser<AstLexeme> {
             nextToken is LanguageToken.TemplateSource -> {
                 AstLexeme.TemplateSource(nextToken.text)
             }
+            ConditionalBlockParser.canParse(stream) -> {
+                ConditionalBlockParser.parse(stream)
+            }
             VariableAssignParser.canParse(stream) -> {
                 VariableAssignParser.parse(stream)
             }
