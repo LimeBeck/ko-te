@@ -30,6 +30,16 @@ jobs:
           distribution: 'temurin'
           java-version: '11'
 
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.konan/
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle
+      
       - name: Understand where am i
         run: pwd && ls -lah
 
