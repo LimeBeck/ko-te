@@ -48,8 +48,13 @@ object KeyAccessParser : AstLexemeParser<AstLexeme.KeyAccess> {
         val rootIdentifier = VariableParser.parse(stream)
         stream.next()
         var value = rootIdentifier as AstLexeme.Value
-        while (stream.hasNext() && canParseDotAccess(stream)){
-            value = parseNextDotAccess(stream, value)
+        while (stream.hasNext()){
+            when {
+                canParseDotAccess(stream) -> value = parseNextDotAccess(stream, value)
+                IndexAccessParser.canParseIndexAccess(stream) -> value = IndexAccessParser.parseNextIndexAccess(stream, value)
+                else -> break;
+            }
+            
             stream.next()
         }
         if(value == rootIdentifier)
