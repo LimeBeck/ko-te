@@ -264,8 +264,8 @@ class AstParserTest {
         assertEquals(1, list.size)
         assertEquals(
             listOf(
-                AstLexeme.BinaryOperation(
-                    operation = AstLexeme.BinaryOperations.PLUS,
+                AstLexeme.InfixOperation(
+                    operation = AstLexeme.Operation.PLUS,
                     left = AstLexeme.Number(1),
                     right = AstLexeme.Number(2)
                 )
@@ -283,10 +283,10 @@ class AstParserTest {
         assertEquals(1, list.size)
         assertEquals(
             listOf(
-                AstLexeme.BinaryOperation(
-                    operation = AstLexeme.BinaryOperations.PLUS,
-                    left = AstLexeme.BinaryOperation(
-                        operation = AstLexeme.BinaryOperations.MULTIPLY,
+                AstLexeme.InfixOperation(
+                    operation = AstLexeme.Operation.PLUS,
+                    left = AstLexeme.InfixOperation(
+                        operation = AstLexeme.Operation.MULTIPLY,
                         left = AstLexeme.Number(1),
                         right = AstLexeme.Number(2)
                     ),
