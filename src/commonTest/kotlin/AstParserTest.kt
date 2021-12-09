@@ -237,6 +237,30 @@ class AstParserTest {
     }
 
     @Test
+    fun parseObjectMethodFromTemplate() = runTest {
+        val astLexemes = """
+            {{ object.key()() }}
+        """.trimIndent().getAst()
+        val list = astLexemes.body.toList()
+
+        assertEquals(1, list.size)
+        assertEquals(
+            listOf(
+                AstLexeme.FunctionCall(
+                    identifier = AstLexeme.FunctionCall(
+                        identifier = AstLexeme.KeyAccess(
+                            obj = AstLexeme.Variable("object"),
+                            key = "key"
+                        ),
+                        args = listOf()
+                    ),
+                    args = listOf()
+                )
+            ), list
+        )
+    }
+
+    @Test
     fun parseIfElseFromTemplate() = runTest {
         val astLexemes = """
             {{ if(variable) }} true {{ else }} false {{ endif }}

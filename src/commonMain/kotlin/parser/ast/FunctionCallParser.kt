@@ -48,7 +48,10 @@ object FunctionCallParser : AstLexemeValueParser {
         if (!hasClosedBracket)
             stream.throwErrorOnValue("punctuation ')'")
 
-        val innerValueStreams = innerValues.fold(mutableListOf(mutableListOf<LanguageToken>())){ acc, languageToken ->
+        val innerValueStreams = innerValues.fold(mutableListOf<MutableList<LanguageToken>>()){ acc, languageToken ->
+            if(acc.isEmpty()){
+                acc.add(mutableListOf())
+            }
             if(languageToken is LanguageToken.Punctuation && languageToken.value == ","){
                 if(acc.last().isEmpty()){
                     stream.throwErrorOnValue("value before ','")

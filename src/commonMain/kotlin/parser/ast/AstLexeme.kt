@@ -4,10 +4,10 @@ import dev.limebeck.templateEngine.parser.LanguageToken
 
 sealed interface AstLexeme {
 
-    data class TemplateSource(val text: kotlin.String) : AstLexeme
-
     interface Value : AstLexeme
     interface WritableValue : Value
+
+    data class TemplateSource(val text: kotlin.String) : Value
 
     data class Number(val value: kotlin.Number) : Value
 
