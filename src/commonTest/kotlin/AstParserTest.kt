@@ -239,7 +239,7 @@ class AstParserTest {
     @Test
     fun parseObjectMethodFromTemplate() = runTest {
         val astLexemes = """
-            {{ object.key()() }}
+            {{ object.key()(another.key) }}
         """.trimIndent().getAst()
         val list = astLexemes.body.toList()
 
@@ -254,7 +254,12 @@ class AstParserTest {
                         ),
                         args = listOf()
                     ),
-                    args = listOf()
+                    args = listOf(
+                        AstLexeme.FunctionArgument(
+                            name = null,
+                            value = AstLexeme.KeyAccess(obj = AstLexeme.Variable(name = "another"), key = "key")
+                        )
+                    )
                 )
             ), list
         )
