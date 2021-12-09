@@ -5,19 +5,19 @@ import dev.limebeck.templateEngine.inputStream.recoverable
 import dev.limebeck.templateEngine.inputStream.skipNext
 import dev.limebeck.templateEngine.parser.LanguageToken
 
-object KeyAccessParser : AstLexemeParser<AstLexeme.KeyAccess> {
+object KeyAccessParser : AstLexemeValueParser {
     override fun canParse(stream: RewindableInputStream<LanguageToken>): Boolean {
         return recoverable(stream) {
             val canParseIdentifier = VariableParser.canParse(stream)
             if (canParseIdentifier && stream.hasNext()) {
                 stream.next()
-                return@recoverable canParseDotAccess(stream)
+                return@recoverable canParseNext(stream)
             }
             return@recoverable false
         }
     }
 
-    fun canParseDotAccess(stream: RewindableInputStream<LanguageToken>): Boolean = recoverable(stream) {
+    override fun canParseNext(stream: RewindableInputStream<LanguageToken>): Boolean = recoverable(stream) {
         val nextItem = stream.peek()
         val hasDot = nextItem is LanguageToken.Punctuation && nextItem.value == "."
 
@@ -29,7 +29,7 @@ object KeyAccessParser : AstLexemeParser<AstLexeme.KeyAccess> {
         return@recoverable false
     }
 
-    fun parseNextDotAccess(
+    override fun parseNext(
         stream: RewindableInputStream<LanguageToken>,
         prevValue: AstLexeme.Value
     ): AstLexeme.KeyAccess {
@@ -50,8 +50,8 @@ object KeyAccessParser : AstLexemeParser<AstLexeme.KeyAccess> {
         var value = rootIdentifier as AstLexeme.Value
         while (stream.hasNext()){
             when {
-                canParseDotAccess(stream) -> value = parseNextDotAccess(stream, value)
-                IndexAccessParser.canParseIndexAccess(stream) -> value = IndexAccessParser.parseNextIndexAccess(stream, value)
+                canParseNext(stream) -> value = parseNext(stream, value)
+                IndexAccessParser.canParseNext(stream) -> value = IndexAccessParser.parseNext(stream, value)
                 else -> break;
             }
             

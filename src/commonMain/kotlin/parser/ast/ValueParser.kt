@@ -3,6 +3,11 @@ package dev.limebeck.templateEngine.parser.ast
 import dev.limebeck.templateEngine.inputStream.RewindableInputStream
 import dev.limebeck.templateEngine.parser.LanguageToken
 
+interface AstLexemeValueParser: AstLexemeParser<AstLexeme.Value> {
+    fun parseNext(stream: RewindableInputStream<LanguageToken>, prevValue: AstLexeme.Value): AstLexeme.Value
+    fun canParseNext(stream: RewindableInputStream<LanguageToken>): Boolean
+}
+
 object ValueParser : AstLexemeParser<AstLexeme.Value> {
     private val valueParsers = listOf<AstLexemeParser<AstLexeme.Value>>(
         LiteralParser,

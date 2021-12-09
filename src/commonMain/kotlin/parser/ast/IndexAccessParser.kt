@@ -5,13 +5,13 @@ import dev.limebeck.templateEngine.inputStream.recoverable
 import dev.limebeck.templateEngine.inputStream.skipNext
 import dev.limebeck.templateEngine.parser.LanguageToken
 
-object IndexAccessParser : AstLexemeParser<AstLexeme.IndexAccess> {
+object IndexAccessParser : AstLexemeValueParser {
     override fun canParse(stream: RewindableInputStream<LanguageToken>): Boolean {
         return recoverable(stream) {
             val canParseIdentifier = VariableParser.canParse(stream)
             if (canParseIdentifier && stream.hasNext()) {
                 stream.next()
-                return@recoverable canParseIndexAccess(stream)
+                return@recoverable canParseNext(stream)
             }
             return@recoverable false
         }
@@ -19,7 +19,7 @@ object IndexAccessParser : AstLexemeParser<AstLexeme.IndexAccess> {
 
     fun Number.isInteger() = !this.toString().contains(".")
 
-    fun canParseIndexAccess(stream: RewindableInputStream<LanguageToken>): Boolean = recoverable(stream) {
+    override fun canParseNext(stream: RewindableInputStream<LanguageToken>): Boolean = recoverable(stream) {
         val nextItem = stream.peek()
         val hasOpenBracket = nextItem is LanguageToken.Punctuation && nextItem.value == "["
 
@@ -37,7 +37,7 @@ object IndexAccessParser : AstLexemeParser<AstLexeme.IndexAccess> {
         return@recoverable false
     }
 
-    fun parseNextIndexAccess(
+    override fun parseNext(
         stream: RewindableInputStream<LanguageToken>,
         prevValue: AstLexeme.Value
     ): AstLexeme.IndexAccess {
@@ -66,8 +66,8 @@ object IndexAccessParser : AstLexemeParser<AstLexeme.IndexAccess> {
         var value = rootIdentifier as AstLexeme.Value
         while (stream.hasNext()) {
             when {
-                canParseIndexAccess(stream) -> value = parseNextIndexAccess(stream, value)
-                KeyAccessParser.canParseDotAccess(stream) ->  value = KeyAccessParser.parseNextDotAccess(stream, value)
+                canParseNext(stream) -> value = parseNext(stream, value)
+                KeyAccessParser.canParseNext(stream) ->  value = KeyAccessParser.parseNext(stream, value)
                 else -> break
             }
            
