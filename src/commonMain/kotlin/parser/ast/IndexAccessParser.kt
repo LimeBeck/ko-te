@@ -5,7 +5,7 @@ import dev.limebeck.templateEngine.inputStream.recoverable
 import dev.limebeck.templateEngine.inputStream.skipNext
 import dev.limebeck.templateEngine.parser.LanguageToken
 
-object IndexAccessParser : AstLexemeParser<AstLexeme.KeyAccess> {
+object IndexAccessParser : AstLexemeParser<AstLexeme.IndexAccess> {
     override fun canParse(stream: RewindableInputStream<LanguageToken>): Boolean {
         return recoverable(stream) {
             val canParseIdentifier = VariableParser.canParse(stream)
@@ -17,7 +17,7 @@ object IndexAccessParser : AstLexemeParser<AstLexeme.KeyAccess> {
         }
     }
 
-    fun Number.isInteger() = this.toFloat() % this.toInt() == 0f
+    fun Number.isInteger() = !this.toString().contains(".")
 
     fun canParseIndexAccess(stream: RewindableInputStream<LanguageToken>): Boolean = recoverable(stream) {
         val nextItem = stream.peek()
@@ -25,9 +25,13 @@ object IndexAccessParser : AstLexemeParser<AstLexeme.KeyAccess> {
 
         if (hasOpenBracket) {
             stream.next()
-            val next = stream.peek()
-            if (next is LanguageToken.NumericValue && (next.value.isInteger())) {
-                return@recoverable true
+            val index = stream.peek()
+            if (index is LanguageToken.NumericValue && index.value.isInteger()) {
+                stream.next()
+                val closedBracket = stream.peek()
+                val hasClosedBracket = closedBracket is LanguageToken.Punctuation && closedBracket.value == "]" 
+                
+                return@recoverable hasClosedBracket
             }
         }
         return@recoverable false
@@ -47,13 +51,14 @@ object IndexAccessParser : AstLexemeParser<AstLexeme.KeyAccess> {
                 stream.throwErrorOnValue("integer number")
         } as LanguageToken.NumericValue
         stream.next()
-        val hasClosedBracket = nextItem is LanguageToken.Punctuation && nextItem.value == "]"
+        val closedBracket = stream.peek()
+        val hasClosedBracket = closedBracket is LanguageToken.Punctuation && closedBracket.value == "]"
         if (!hasClosedBracket)
             stream.throwErrorOnValue("punctuation ']'")
         return AstLexeme.IndexAccess(prevValue, index.value.toInt())
     }
 
-    override fun parse(stream: RewindableInputStream<LanguageToken>): AstLexeme.KeyAccess {
+    override fun parse(stream: RewindableInputStream<LanguageToken>): AstLexeme.IndexAccess {
         if (!canParse(stream))
             stream.throwErrorOnValue("index access")
         val rootIdentifier = VariableParser.parse(stream)
@@ -65,6 +70,6 @@ object IndexAccessParser : AstLexemeParser<AstLexeme.KeyAccess> {
         }
         if (value == rootIdentifier)
             stream.throwErrorOnValue("index access")
-        return value as AstLexeme.KeyAccess
+        return value as AstLexeme.IndexAccess
     }
 }
