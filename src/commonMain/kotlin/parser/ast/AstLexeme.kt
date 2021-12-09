@@ -1,5 +1,7 @@
 package dev.limebeck.templateEngine.parser.ast
 
+import dev.limebeck.templateEngine.parser.LanguageToken
+
 sealed interface AstLexeme {
 
     data class TemplateSource(val text: kotlin.String) : AstLexeme
@@ -14,7 +16,7 @@ sealed interface AstLexeme {
     data class Boolean(val value: kotlin.Boolean) : Value
 
     data class FunctionCall(
-        val name: kotlin.String,
+        val identifier: Value,
         val args: List<FunctionArgument>
     ) : Value
 

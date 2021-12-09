@@ -124,7 +124,7 @@ class AstParserTest {
         assertEquals(
             listOf(
                 AstLexeme.FunctionCall(
-                    name = "function",
+                    identifier = AstLexeme.Variable("function"),
                     args = listOf(
                         AstLexeme.FunctionArgument(
                             name = null,
@@ -132,7 +132,7 @@ class AstParserTest {
                         ),
                         AstLexeme.FunctionArgument(
                             name = null,
-                            value = AstLexeme.Number(1),
+                            value = AstLexeme.Number(2),
                         )
                     )
                 )

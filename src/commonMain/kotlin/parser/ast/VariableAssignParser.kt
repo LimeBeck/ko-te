@@ -17,7 +17,7 @@ object VariableAssignParser : AstLexemeParser<AstLexeme.Assign> {
         }
 
         stream.skipNext(1)
-        val variable = VariableParser.parse(stream)
+        val variable = IdentifierParser.parse(stream)
         stream.next()
 
         stream.skipNext(listOf("=")) { value, next ->

@@ -8,7 +8,7 @@ import dev.limebeck.templateEngine.parser.LanguageToken
 object IndexAccessParser : AstLexemeValueParser {
     override fun canParse(stream: RewindableInputStream<LanguageToken>): Boolean {
         return recoverable(stream) {
-            val canParseIdentifier = VariableParser.canParse(stream)
+            val canParseIdentifier = IdentifierParser.canParse(stream)
             if (canParseIdentifier && stream.hasNext()) {
                 stream.next()
                 return@recoverable canParseNext(stream)
@@ -20,6 +20,9 @@ object IndexAccessParser : AstLexemeValueParser {
     fun Number.isInteger() = !this.toString().contains(".")
 
     override fun canParseNext(stream: RewindableInputStream<LanguageToken>): Boolean = recoverable(stream) {
+        if(!stream.hasNext())
+            return@recoverable false
+
         val nextItem = stream.peek()
         val hasOpenBracket = nextItem is LanguageToken.Punctuation && nextItem.value == "["
 
@@ -61,20 +64,12 @@ object IndexAccessParser : AstLexemeValueParser {
     override fun parse(stream: RewindableInputStream<LanguageToken>): AstLexeme.IndexAccess {
         if (!canParse(stream))
             stream.throwErrorOnValue("index access")
-        val rootIdentifier = VariableParser.parse(stream)
+        val rootIdentifier = IdentifierParser.parse(stream)
         stream.next()
-        var value = rootIdentifier as AstLexeme.Value
-        while (stream.hasNext()) {
-            when {
-                canParseNext(stream) -> value = parseNext(stream, value)
-                KeyAccessParser.canParseNext(stream) ->  value = KeyAccessParser.parseNext(stream, value)
-                else -> break
-            }
-           
-            stream.next()
-        }
-        if (value == rootIdentifier)
+        if(canParseNext(stream)) {
+            return parseNext(stream, rootIdentifier)
+        } else {
             stream.throwErrorOnValue("index access")
-        return value as AstLexeme.IndexAccess
+        }
     }
 }
