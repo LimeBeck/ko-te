@@ -1,10 +1,8 @@
 package dev.limebeck.templateEngine.parser.ast
 
 import dev.limebeck.templateEngine.inputStream.RewindableInputStream
-import dev.limebeck.templateEngine.inputStream.readUntil
 import dev.limebeck.templateEngine.parser.LanguageToken
 import dev.limebeck.templateEngine.inputStream.skipNext
-import dev.limebeck.templateEngine.inputStream.toStream
 
 object ConditionalBlockParser : AstLexemeParser<AstLexeme> {
     override fun canParse(stream: RewindableInputStream<LanguageToken>): Boolean {
@@ -38,27 +36,48 @@ object ConditionalBlockParser : AstLexemeParser<AstLexeme> {
             stream.throwErrorOnValue("punctuation ')'")
         stream.next()
 
-        val thenValue = CoreAstParser.parse(stream)
+        val thenValue = mutableListOf<AstLexeme>(CoreAstParser.parse(stream))
+
+        stream.next()
+
+        while (stream.hasNext() && CoreAstParser.canParse(stream)) {
+            thenValue.add(CoreAstParser.parse(stream))
+            if(stream.hasNext())
+                stream.next()
+        }
 
         if (stream.hasNext()) {
-            stream.next()
             val possibleElseOrEndif = stream.peek()
             if (possibleElseOrEndif !is LanguageToken.Keyword || possibleElseOrEndif.name !in listOf("endif", "else")) {
                 stream.throwErrorOnValue("else or endif")
             }
             if (possibleElseOrEndif.name == "else") {
                 stream.next()
-                val elseValue = CoreAstParser.parse(stream)
-                stream.skipNext(1)
+
+                val elseValue = mutableListOf<AstLexeme>(CoreAstParser.parse(stream))
+
+                stream.next()
+
+                while (stream.hasNext() && CoreAstParser.canParse(stream)) {
+                    elseValue.add(CoreAstParser.parse(stream))
+                    if(stream.hasNext())
+                        stream.next()
+                }
+
+                val possibleEndif = stream.peek()
+                if (possibleEndif !is LanguageToken.Keyword || possibleEndif.name != "endif") {
+                    stream.throwErrorOnValue("endif")
+                }
+
                 return AstLexeme.Conditional(
                     condition = condition,
-                    then = listOf(thenValue),
-                    another = listOf(elseValue)
+                    then = thenValue,
+                    another = elseValue
                 )
             }
             return AstLexeme.Conditional(
                 condition = condition,
-                then = listOf(thenValue),
+                then = thenValue,
                 another = null
             )
         } else {
