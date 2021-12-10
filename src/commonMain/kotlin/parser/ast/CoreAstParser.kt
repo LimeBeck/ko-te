@@ -4,8 +4,17 @@ import dev.limebeck.templateEngine.inputStream.RewindableInputStream
 import dev.limebeck.templateEngine.parser.LanguageToken
 
 object CoreAstParser : AstLexemeParser<AstLexeme> {
+    private val parsers = listOf(
+        ConditionalBlockParser,
+        IterableBlockParser,
+        VariableAssignParser,
+        ValueParser
+    )
+
     override fun canParse(stream: RewindableInputStream<LanguageToken>): Boolean {
-        return stream.hasNext()
+        if(!stream.hasNext()) return false
+        val next = stream.peek()
+        return parsers.any { it.canParse(stream) } || next is LanguageToken.TemplateSource
     }
 
     override fun parse(stream: RewindableInputStream<LanguageToken>): AstLexeme {
@@ -16,6 +25,9 @@ object CoreAstParser : AstLexemeParser<AstLexeme> {
             }
             ConditionalBlockParser.canParse(stream) -> {
                 ConditionalBlockParser.parse(stream)
+            }
+            IterableBlockParser.canParse(stream) -> {
+                IterableBlockParser.parse(stream)
             }
             VariableAssignParser.canParse(stream) -> {
                 VariableAssignParser.parse(stream)

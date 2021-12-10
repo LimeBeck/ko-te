@@ -268,7 +268,7 @@ class AstParserTest {
     @Test
     fun parseIfElseFromTemplate() = runTest {
         val astLexemes = """
-            {{ if(variable) }} true {{ else }} false {{ endif }}
+            {{ if(variable()) }} true {{ else }} false {{ endif }}
         """.trimIndent().getAst()
         val list = astLexemes.body.toList()
 
@@ -276,7 +276,7 @@ class AstParserTest {
         assertEquals(
             listOf(
                 AstLexeme.Conditional(
-                    condition = AstLexeme.Variable("variable"),
+                    condition = AstLexeme.FunctionCall(AstLexeme.Variable("variable"), listOf()),
                     then = listOf(AstLexeme.TemplateSource(" true ")),
                     another = listOf(AstLexeme.TemplateSource(" false "))
                 )
@@ -306,7 +306,7 @@ class AstParserTest {
     @Test
     fun parseIteratorFromTemplate() = runTest {
         val astLexemes = """
-            {{ for(variable in array) }}
+            {{ for variable in array }}
             Value: {{ variable }}
             {{ endfor }}
         """.trimIndent().getAst()
