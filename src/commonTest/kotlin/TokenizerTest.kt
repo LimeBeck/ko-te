@@ -1,9 +1,11 @@
 import dev.limebeck.templateEngine.inputStream.toStream
+import dev.limebeck.templateEngine.parser.LanguageToken
 import dev.limebeck.templateEngine.parser.MustacheLikeLanguageParser
 import dev.limebeck.templateEngine.parser.MustacheLikeTemplateTokenizer
 import dev.limebeck.templateEngine.parser.TemplateToken
 import utils.runTest
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 
 class TokenizerTest {
@@ -45,7 +47,26 @@ class TokenizerTest {
         val tokens = tokenizer.analyze(stream)
 
         val languageParser = MustacheLikeLanguageParser()
-        val languageTokens = languageParser.parse(tokens.asSequence())
-        assertEquals(33, languageTokens.toList().size)
+        val languageTokens = languageParser.parse(tokens.asSequence()).toList()
+        assertEquals(32, languageTokens.size)
+    }
+
+    @Test
+    fun parseKeywordFromTemplate() = runTest {
+        val simpleTextTemplate = """
+            {{ true }}{{ false }}
+        """.trimIndent()
+        val stream = simpleTextTemplate.toStream()
+
+        val tokenizer = MustacheLikeTemplateTokenizer()
+        val tokens = tokenizer.analyze(stream)
+
+        val languageParser = MustacheLikeLanguageParser()
+        val languageTokens = languageParser.parse(tokens.asSequence()).toList()
+        assertEquals(2, languageTokens.size)
+        assertContentEquals(
+            listOf("true", "false"),
+            languageTokens.map { (it as? LanguageToken.Keyword)?.name }
+        )
     }
 }

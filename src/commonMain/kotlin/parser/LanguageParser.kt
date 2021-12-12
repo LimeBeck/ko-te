@@ -13,8 +13,8 @@ data class LanguageError(
 
 class MustacheLikeLanguageParser : LanguageParser {
     companion object {
-        val KEYWORDS = listOf("if", "else", "for", "in", "true", "false", "null", "endif", "let")
-        val PUNCTUATION = ",.;[]{}".toList()
+        val KEYWORDS = listOf("if", "else", "endif", "for", "in", "endfor", "true", "false", "null", "let", "import")
+        val PUNCTUATION = ",.;[]{}()".toList()
         val OPERATIONS = "+-*/%!<>=&".toList()
         val ALLOWED_STRING_DEFINITIONS = listOf("\"", "\"\"\"", "'")
     }
@@ -33,21 +33,18 @@ class MustacheLikeLanguageParser : LanguageParser {
                 val nextChar = stream.peek()
                 when {
                     nextChar.isOperation() -> {
-                        yield(LanguageToken.Operation(nextChar.toString(), position = token.position))
+                        yield(LanguageToken.Operation(nextChar.toString(), startPosition = token.startPosition))
                         stream.next()
                     }
                     nextChar.isPunctuation() -> {
-                        yield(LanguageToken.Punctuation(nextChar.toString(), position = token.position))
+                        yield(LanguageToken.Punctuation(nextChar.toString(), startPosition = token.startPosition))
                         stream.next()
                     }
-                    KEYWORDS.any { stream.isNextSequenceEquals(it.toList() + ' ') } -> {
-                        val keyword = stream.readUntil { !it.isWhitespace() }.joinToString("")
-                        yield(LanguageToken.Keyword(keyword, position = token.position))
-                    }
                     ALLOWED_STRING_DEFINITIONS.any { stream.isNextSequenceEquals(it.toList()) } -> {
-                        stream.readUntil { it.isStringDef() }
-                        val string = stream.readUntil { !it.isStringDef() }.joinToString("")
-                        yield(LanguageToken.StringValue(string, position = token.position))
+                        val stringDef = stream.readUntil { it.isStringDef() }.first()
+                        val string = stream.readUntil { it != stringDef }.joinToString("")
+                        stream.skipNext(listOf(stringDef))
+                        yield(LanguageToken.StringValue(string, startPosition = token.startPosition))
                     }
                     nextChar.isDigit() -> {
                         var hasPointInside = false
@@ -58,7 +55,7 @@ class MustacheLikeLanguageParser : LanguageParser {
                                     return@readUntil true
                                 } else {
                                     throw LanguageError(
-                                        position = token.position,
+                                        position = token.startPosition,
                                         message = "<1ac7d0b6> Unexpected point inside number ${token.text}"
                                     )
                                 }
@@ -68,7 +65,7 @@ class MustacheLikeLanguageParser : LanguageParser {
                         yield(
                             LanguageToken.NumericValue(
                                 value = if (hasPointInside) digit.toFloat() else digit.toInt(),
-                                position = token.position
+                                startPosition = token.startPosition
                             )
                         )
                     }
@@ -78,19 +75,23 @@ class MustacheLikeLanguageParser : LanguageParser {
                                     && !it.isPunctuation()
                                     && !it.isOperation()
                                     && !it.isStringDef()
-                        }
-                        stream.debug()
-                        yield(
-                            LanguageToken.Identifier(
-                                name = identifier.joinToString(""),
-                                position = token.position
+                        }.joinToString("")
+
+                        if (identifier in KEYWORDS) {
+                            yield(LanguageToken.Keyword(identifier, startPosition = token.startPosition))
+                        } else {
+                            yield(
+                                LanguageToken.Identifier(
+                                    name = identifier,
+                                    startPosition = token.startPosition
+                                )
                             )
-                        )
+                        }
                     }
                     else -> {
                         throw LanguageError(
-                            position = token.position,
-                            message = "<4bf66c83> Unexpected token ${token.text}"
+                            position = token.startPosition,
+                            message = "<4bf66c83> Unexpected token '${token.text}'"
                         )
                     }
                 }
@@ -107,7 +108,7 @@ class MustacheLikeLanguageParser : LanguageParser {
                     is TemplateToken.TemplateSource -> yield(
                         LanguageToken.TemplateSource(
                             token.text,
-                            position = token.position
+                            startPosition = token.startPosition
                         )
                     )
                     is TemplateToken.LanguagePart -> yieldAll(parseLanguageToken(token))

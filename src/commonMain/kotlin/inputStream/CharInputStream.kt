@@ -74,7 +74,13 @@ class CharInputStream(private val string: String) : RewindableInputStream<Char> 
         override val absolutePosition: Int,
         val line: Int,
         val column: Int
-    ) : InputStream.Position
+    ) : InputStream.Position {
+        override fun copy(): InputStream.Position = this.copy(
+            absolutePosition = absolutePosition,
+            line = line,
+            column = column
+        )
+    }
 
     override fun toString(): String {
         return "CharInputStream(${this.hashCode()}) on position $position for string ${string.cropForLog()}"

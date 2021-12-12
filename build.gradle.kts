@@ -77,10 +77,8 @@ kotlin {
             }
         }
         val jsMain by getting {
-            dependencies {// https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core-js
-//                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-js:1.6.0-RC")
+            dependencies {
                 implementation(kotlin("stdlib-js"))
-
             }
         }
         val jsTest by getting {
