@@ -1,10 +1,14 @@
 import dev.limebeck.templateEngine.Renderer
+import dev.limebeck.templateEngine.runtime.MapContext
+import dev.limebeck.templateEngine.runtime.RuntimeException
+import dev.limebeck.templateEngine.runtime.RuntimeObject
+import utils.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class RenderTest {
     @Test
-    fun renderSimpleStringTemplate() {
+    fun renderSimpleStringTemplate() = runTest {
         val renderer = Renderer()
 
         val simpleTextTemplate = """
@@ -28,8 +32,18 @@ class RenderTest {
     }
 
     @Test
-    fun renderTemplateWithFunction() {
-        val renderer = Renderer()
+    fun renderTemplateWithFunction() = runTest {
+        val context = MapContext(mapOf(
+            "uppercase" to RuntimeObject.CallableWrapper {
+                val value = it.first()
+                if (value is String) {
+                    value.uppercase()
+                } else {
+                    throw RuntimeException("<36c2048b> Value must be a string")
+                }
+            }
+        ).toMutableMap())
+        val renderer = Renderer(context)
 
         val template = """
             Hello, {{ uppercase(name) }}!
@@ -47,7 +61,7 @@ class RenderTest {
     }
 
     @Test
-    fun languageReference(){
+    fun languageReference() {
         val reference = """
             Variable access: {{ variable }}
             Key access: {{ object.value }}

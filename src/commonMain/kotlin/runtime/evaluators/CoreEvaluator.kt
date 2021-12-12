@@ -23,7 +23,7 @@ object FunctionEvaluator : Evaluator<AstLexeme.FunctionCall, Any> {
             is AstLexeme.Variable -> context.get(lexeme.identifier.name)
             else -> CoreEvaluator.eval(lexeme.identifier, context).result
         }
-        if (possibleFunction !is RuntimeObject.Callable)
+        if (possibleFunction !is RuntimeObject.CallableWrapper)
             throw RuntimeException("<95ee753e> $lexeme is not a callable")
         val args = lexeme.args.map {
             CoreEvaluator.eval(it.value, context).result

@@ -3,15 +3,28 @@ package dev.limebeck.templateEngine.runtime
 interface RuntimeContext {
     fun get(key: String): RuntimeObject
     fun set(key: String, obj: RuntimeObject)
+    operator fun plus(another: RuntimeContext): RuntimeContext
 }
 
 sealed interface RuntimeObject {
-    class Callable(
+    class CallableWrapper(
         val block: (args: List<Any>) -> Any
     ) : RuntimeObject
 
     class Value(
         val value: Any
+    ) : RuntimeObject
+
+    class StringWrapper(
+        val string: kotlin.String
+    ) : RuntimeObject
+
+    class NumberWrapper(
+        val number: kotlin.Number
+    ) : RuntimeObject
+
+    class BooleanWrapper(
+        val value: kotlin.Boolean
     ) : RuntimeObject
 }
 
@@ -33,6 +46,12 @@ data class MapContext(
 
     override fun set(key: String, obj: RuntimeObject) {
         context[key] = obj
+    }
+
+    override fun plus(another: RuntimeContext): RuntimeContext {
+        return if (another is MapContext)
+            MapContext((this.context + another.context).toMutableMap())
+        else throw RuntimeException("<c99fdcd8> Can`t merge contexts $this and $another")
     }
 }
 

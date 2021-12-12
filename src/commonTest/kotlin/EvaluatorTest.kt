@@ -46,9 +46,9 @@ class EvaluatorTest {
             template.parseAst(),
             mapOf(
                 "variable" to RuntimeObject.Value("World"),
-                "function" to RuntimeObject.Callable { args ->
+                "function" to RuntimeObject.CallableWrapper { args ->
                     val name = args.first()
-                    return@Callable "Hello, $name"
+                    "Hello, $name"
                 }
             ).asContext()
         )
@@ -63,8 +63,8 @@ class EvaluatorTest {
             template.parseAst(),
             mapOf(
                 "variable" to RuntimeObject.Value("World"),
-                "function" to RuntimeObject.Callable { args1 ->
-                    return@Callable RuntimeObject.Callable { args2 ->
+                "function" to RuntimeObject.CallableWrapper { args1 ->
+                    RuntimeObject.CallableWrapper { args2 ->
                         "${args1.first()}, ${args2.first()}"
                     }
                 }
