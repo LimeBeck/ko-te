@@ -1,8 +1,5 @@
-import dev.limebeck.templateEngine.inputStream.toStream
-import dev.limebeck.templateEngine.parser.*
 import dev.limebeck.templateEngine.parser.ast.AstLexeme
-import dev.limebeck.templateEngine.parser.ast.AstRoot
-import dev.limebeck.templateEngine.parser.ast.KoTeAstParser
+import utils.parseAst
 import utils.runTest
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
@@ -10,24 +7,11 @@ import kotlin.test.assertEquals
 
 class AstParserTest {
 
-    val tokenizer = MustacheLikeTemplateTokenizer()
-    val languageParser = MustacheLikeLanguageParser()
-    val astParser = KoTeAstParser()
-
-    private suspend fun String.getAst(): AstRoot {
-        val stream = this.toStream()
-        val tokens = tokenizer.analyze(stream)
-        val languageTokens = languageParser.parse(tokens.asSequence())
-        return astParser.parse(languageTokens).also {
-            println(it.body.toList())
-        }
-    }
-
     @Test
     fun parseVariableFromTemplate() = runTest {
         val astLexemes = """
             Hello, {{ name }}!
-        """.trimIndent().getAst()
+        """.trimIndent().parseAst()
         val list = astLexemes.body.toList()
 
         assertEquals(3, list.size)
@@ -37,7 +21,7 @@ class AstParserTest {
     fun parseStringValueFromTemplate() = runTest {
         val astLexemes = """
             {{ "World" }}
-        """.trimIndent().getAst()
+        """.trimIndent().parseAst()
         val list = astLexemes.body.toList()
 
         assertEquals(1, list.size)
@@ -48,7 +32,7 @@ class AstParserTest {
     fun parseNumericValueFromTemplate() = runTest {
         val astLexemes = """
             {{ 123 }}{{ 123.456 }}
-        """.trimIndent().getAst()
+        """.trimIndent().parseAst()
         val list = astLexemes.body.toList()
 
         assertEquals(2, list.size)
@@ -63,7 +47,7 @@ class AstParserTest {
     fun parseBooleanValueFromTemplate() = runTest {
         val astLexemes = """
             {{ true }}{{ false }}
-        """.trimIndent().getAst()
+        """.trimIndent().parseAst()
         val list = astLexemes.body.toList()
 
         assertEquals(2, list.size)
@@ -79,7 +63,7 @@ class AstParserTest {
     fun parseAssignStringFromTemplate() = runTest {
         val astLexemes = """
             {{ let name = "World" }}
-        """.trimIndent().getAst()
+        """.trimIndent().parseAst()
         val list = astLexemes.body.toList()
 
         assertEquals(1, list.size)
@@ -98,7 +82,7 @@ class AstParserTest {
     fun parseAssignVariableFromTemplate() = runTest {
         val astLexemes = """
             {{ let name = variable }}
-        """.trimIndent().getAst()
+        """.trimIndent().parseAst()
         val list = astLexemes.body.toList()
 
         assertEquals(1, list.size)
@@ -117,7 +101,7 @@ class AstParserTest {
     fun parseFunctionCallFromTemplate() = runTest {
         val astLexemes = """
             {{ function("first", 2) }}
-        """.trimIndent().getAst()
+        """.trimIndent().parseAst()
         val list = astLexemes.body.toList()
 
         assertEquals(1, list.size)
@@ -145,7 +129,7 @@ class AstParserTest {
     fun parseKeyAccessFromTemplate() = runTest {
         val astLexemes = """
             {{ object.key }}
-        """.trimIndent().getAst()
+        """.trimIndent().parseAst()
         val list = astLexemes.body.toList()
 
         assertEquals(1, list.size)
@@ -156,7 +140,7 @@ class AstParserTest {
     fun parseNestedKeyAccessFromTemplate() = runTest {
         val astLexemes = """
             {{ object.key1.key2 }}
-        """.trimIndent().getAst()
+        """.trimIndent().parseAst()
         val list = astLexemes.body.toList()
 
         assertEquals(1, list.size)
@@ -177,7 +161,7 @@ class AstParserTest {
     fun parseIndexAccessFromTemplate() = runTest {
         val astLexemes = """
             {{ object[0] }}
-        """.trimIndent().getAst()
+        """.trimIndent().parseAst()
         val list = astLexemes.body.toList()
 
         assertEquals(1, list.size)
@@ -195,7 +179,7 @@ class AstParserTest {
     fun parseNestedIndexAccessFromTemplate() = runTest {
         val astLexemes = """
             {{ object[0][2] }}
-        """.trimIndent().getAst()
+        """.trimIndent().parseAst()
         val list = astLexemes.body.toList()
 
         assertEquals(1, list.size)
@@ -216,7 +200,7 @@ class AstParserTest {
     fun parseMixedAccessFromTemplate() = runTest {
         val astLexemes = """
             {{ object[0].key[0] }}
-        """.trimIndent().getAst()
+        """.trimIndent().parseAst()
         val list = astLexemes.body.toList()
 
         assertEquals(1, list.size)
@@ -240,7 +224,7 @@ class AstParserTest {
     fun parseObjectMethodFromTemplate() = runTest {
         val astLexemes = """
             {{ object.key()(another.key) }}
-        """.trimIndent().getAst()
+        """.trimIndent().parseAst()
         val list = astLexemes.body.toList()
 
         assertEquals(1, list.size)
@@ -269,7 +253,7 @@ class AstParserTest {
     fun parseIfElseFromTemplate() = runTest {
         val astLexemes = """
             {{ if(variable()) }} true {{ else }} false {{ endif }}
-        """.trimIndent().getAst()
+        """.trimIndent().parseAst()
         val list = astLexemes.body.toList()
 
         assertEquals(1, list.size)
@@ -288,7 +272,7 @@ class AstParserTest {
     fun parseIfWithoutElseFromTemplate() = runTest {
         val astLexemes = """
             {{ if(variable) }} true {{ endif }}
-        """.trimIndent().getAst()
+        """.trimIndent().parseAst()
         val list = astLexemes.body.toList()
 
         assertEquals(1, list.size)
@@ -309,7 +293,7 @@ class AstParserTest {
             {{ for variable in array }}
             Value: {{ variable }}
             {{ endfor }}
-        """.trimIndent().getAst()
+        """.trimIndent().parseAst()
         val list = astLexemes.body.toList()
 
         assertEquals(1, list.size)

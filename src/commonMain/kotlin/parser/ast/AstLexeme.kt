@@ -33,20 +33,6 @@ sealed interface AstLexeme {
 
     data class IndexAccess(val array: Value, val index: Int) : WritableValue
 
-    enum class Operation(val stringValue: kotlin.String, val presence: Int, val associativity: Associativity) {
-        PLUS("+", 10, Associativity.RIGHT),
-        MINUS("-", 10, Associativity.RIGHT),
-        MULTIPLY("*", 10, Associativity.RIGHT),
-        DIVIDE("/", 10, Associativity.RIGHT),
-        PERCENT("%", 10, Associativity.RIGHT),
-        EQUALS("==", 10, Associativity.RIGHT)
-    }
-
-    enum class Associativity {
-        RIGHT,
-        LEFT
-    }
-
     data class InfixOperation(val left: AstLexeme, val right: AstLexeme, val operation: Operation) : Value
 
     data class Conditional(
@@ -69,3 +55,17 @@ sealed interface AstLexeme {
 data class AstRoot(
     val body: List<AstLexeme>
 )
+
+enum class Associativity {
+    RIGHT,
+    LEFT
+}
+
+enum class Operation(val stringValue: kotlin.String, val presence: Int, val associativity: Associativity) {
+    PLUS("+", 10, Associativity.RIGHT),
+    MINUS("-", 10, Associativity.RIGHT),
+    MULTIPLY("*", 10, Associativity.RIGHT),
+    DIVIDE("/", 10, Associativity.RIGHT),
+    PERCENT("%", 10, Associativity.RIGHT),
+    EQUALS("==", 10, Associativity.RIGHT)
+}
