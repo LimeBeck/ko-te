@@ -13,13 +13,13 @@ class RenderTest {
 
         val simpleTextTemplate = """
             Hello, {{ name }}!
-            Object value: "{{ object.value }}"
+            Object value: "{{ object.value[0] }}"
         """.trimIndent()
 
         val data = mapOf(
             "name" to "World",
             "object" to mapOf(
-                "value" to "Simple string"
+                "value" to listOf("Simple string")
             )
         )
 
@@ -34,10 +34,10 @@ class RenderTest {
     @Test
     fun renderTemplateWithFunction() = runTest {
         val context = MapContext(mapOf(
-            "uppercase" to RuntimeObject.CallableWrapper {
+            "uppercase" to RuntimeObject.CallableWrapper.from {
                 val value = it.first()
-                if (value is String) {
-                    value.uppercase()
+                if (value is RuntimeObject.StringWrapper) {
+                    value.string.uppercase()
                 } else {
                     throw RuntimeException("<36c2048b> Value must be a string")
                 }

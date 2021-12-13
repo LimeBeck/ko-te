@@ -6,13 +6,52 @@ interface RuntimeContext {
     operator fun plus(another: RuntimeContext): RuntimeContext
 }
 
+fun Any?.wrap(): RuntimeObject =
+    when (this) {
+        null -> RuntimeObject.Null
+        is RuntimeObject -> this
+        is kotlin.String -> RuntimeObject.StringWrapper(this)
+        is kotlin.Number -> RuntimeObject.NumberWrapper(this)
+        is kotlin.Boolean -> RuntimeObject.BooleanWrapper(this)
+        is Collection<*> -> RuntimeObject.CollectionWrapper(this.mapNotNull { it?.wrap() })
+        is Map<*, *> -> RuntimeObject.ObjectWrapper(this.entries.associate {
+            val key = it.key
+            val value = it.value
+            if (key !is String)
+                throw RuntimeException("<22571494> Unsupported key '$key' in object $this")
+            key to value.wrap()
+        })
+
+        else -> throw RuntimeException("<13f5b28> Unsupported context item $this")
+    }
+
+fun Map<String, Any>.wrapAll(): Map<String, RuntimeObject> =
+    map {
+        val value = it.value
+        it.key to it.value.wrap()
+    }.toMap().toMutableMap()
+
 sealed interface RuntimeObject {
     class CallableWrapper(
-        val block: (args: List<Any>) -> Any
+        val block: (args: List<RuntimeObject>) -> RuntimeObject
+    ) : RuntimeObject {
+        companion object {
+            fun from(block: (args: List<RuntimeObject>) -> Any): CallableWrapper {
+                return CallableWrapper { args: List<RuntimeObject> ->
+                    block(args).wrap()
+                }
+            }
+        }
+    }
+
+    object Null : RuntimeObject
+
+    class ObjectWrapper(
+        val obj: Map<String, RuntimeObject>
     ) : RuntimeObject
 
-    class Value(
-        val value: Any
+    class CollectionWrapper(
+        val collection: List<RuntimeObject>
     ) : RuntimeObject
 
     class StringWrapper(

@@ -1,3 +1,4 @@
+import dev.limebeck.templateEngine.render
 import dev.limebeck.templateEngine.runtime.MapContext
 import dev.limebeck.templateEngine.runtime.RuntimeObject
 import dev.limebeck.templateEngine.runtime.SimpleRuntimeEngine
@@ -13,7 +14,7 @@ class EvaluatorTest {
         val simpleTemplate = """Simple Template"""
         val runtimeEngine = SimpleRuntimeEngine
         val result = runtimeEngine.evaluateProgram(simpleTemplate.parseAst(), MapContext.EMPTY)
-        assertEquals(simpleTemplate, result)
+        assertEquals(simpleTemplate, result.render())
     }
 
     @Test
@@ -22,9 +23,9 @@ class EvaluatorTest {
         val runtimeEngine = SimpleRuntimeEngine
         val result = runtimeEngine.evaluateProgram(
             template.parseAst(),
-            mapOf("variable" to RuntimeObject.Value("value")).asContext()
+            mapOf("variable" to RuntimeObject.StringWrapper("value")).asContext()
         )
-        assertEquals("Value: value", result)
+        assertEquals("Value: value", result.render())
     }
 
     @Test
@@ -35,7 +36,7 @@ class EvaluatorTest {
             template.parseAst(),
             MapContext.EMPTY
         )
-        assertEquals("value100", result)
+        assertEquals("value100", result.render())
     }
 
     @Test
@@ -45,14 +46,14 @@ class EvaluatorTest {
         val result = runtimeEngine.evaluateProgram(
             template.parseAst(),
             mapOf(
-                "variable" to RuntimeObject.Value("World"),
+                "variable" to RuntimeObject.StringWrapper("World"),
                 "function" to RuntimeObject.CallableWrapper { args ->
-                    val name = args.first()
-                    "Hello, $name"
+                    val name = args.first() as RuntimeObject.StringWrapper
+                    RuntimeObject.StringWrapper("Hello, ${name.string}")
                 }
             ).asContext()
         )
-        assertEquals("Hello, World", result)
+        assertEquals("Hello, World", result.render())
     }
 
     @Test
@@ -62,14 +63,14 @@ class EvaluatorTest {
         val result = runtimeEngine.evaluateProgram(
             template.parseAst(),
             mapOf(
-                "variable" to RuntimeObject.Value("World"),
+                "variable" to RuntimeObject.StringWrapper("World"),
                 "function" to RuntimeObject.CallableWrapper { args1 ->
-                    RuntimeObject.CallableWrapper { args2 ->
-                        "${args1.first()}, ${args2.first()}"
+                    RuntimeObject.CallableWrapper.from { args2 ->
+                        "${(args1.first() as RuntimeObject.StringWrapper).string}, ${(args2.first() as RuntimeObject.StringWrapper).string}"
                     }
                 }
             ).asContext()
         )
-        assertEquals("Hello, World", result)
+        assertEquals("Hello, World", result.render())
     }
 }

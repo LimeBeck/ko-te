@@ -2,8 +2,9 @@ package dev.limebeck.templateEngine.runtime.evaluators
 
 import dev.limebeck.templateEngine.parser.ast.AstLexeme
 import dev.limebeck.templateEngine.runtime.RuntimeContext
+import dev.limebeck.templateEngine.runtime.RuntimeObject
 
-interface Evaluator<T: AstLexeme, Result> {
+interface Evaluator<T: AstLexeme, Result: RuntimeObject> {
     fun eval(lexeme: T, context: RuntimeContext): EvalResult<Result>
 }
 

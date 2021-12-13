@@ -5,13 +5,14 @@ import dev.limebeck.templateEngine.runtime.RuntimeContext
 import dev.limebeck.templateEngine.runtime.RuntimeException
 import dev.limebeck.templateEngine.runtime.RuntimeObject
 
-object ValueEvaluator: Evaluator<AstLexeme.Value, String> {
-    override fun eval(lexeme: AstLexeme.Value, context: RuntimeContext): EvalResult<String> {
-        val result = when(lexeme) {
-            is AstLexeme.String -> lexeme.value
-            is AstLexeme.Number -> lexeme.value.toString()
+object ValueEvaluator : Evaluator<AstLexeme.Primitive, RuntimeObject> {
+    override fun eval(lexeme: AstLexeme.Primitive, context: RuntimeContext): EvalResult<RuntimeObject> {
+        val result = when (lexeme) {
+            is AstLexeme.String -> RuntimeObject.StringWrapper(lexeme.value)
+            is AstLexeme.Number -> RuntimeObject.NumberWrapper(lexeme.value)
+            is AstLexeme.Boolean -> RuntimeObject.BooleanWrapper(lexeme.value)
 
-            else -> "TODO"
+            else -> TODO()
         }
         return EvalResult(result)
     }
