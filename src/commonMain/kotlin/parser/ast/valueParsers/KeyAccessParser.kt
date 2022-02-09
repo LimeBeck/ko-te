@@ -1,11 +1,13 @@
-package dev.limebeck.templateEngine.parser.ast
+package dev.limebeck.templateEngine.parser.ast.valueParsers
 
 import dev.limebeck.templateEngine.inputStream.RewindableInputStream
 import dev.limebeck.templateEngine.inputStream.recoverable
 import dev.limebeck.templateEngine.inputStream.skipNext
 import dev.limebeck.templateEngine.parser.LanguageToken
+import dev.limebeck.templateEngine.parser.ast.AstLexeme
+import dev.limebeck.templateEngine.parser.ast.throwErrorOnValue
 
-object KeyAccessParser : AstLexemeValueParser {
+object KeyAccessParser : ComplexParser {
     override fun canParse(stream: RewindableInputStream<LanguageToken>): Boolean {
         return recoverable(stream) {
             val canParseIdentifier = IdentifierParser.canParse(stream)

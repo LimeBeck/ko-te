@@ -1,12 +1,18 @@
-package dev.limebeck.templateEngine.parser.ast
+package dev.limebeck.templateEngine.parser.ast.valueParsers
 
 import dev.limebeck.templateEngine.inputStream.RewindableInputStream
 import dev.limebeck.templateEngine.parser.LanguageToken
+import dev.limebeck.templateEngine.parser.ast.AstLexeme
+import dev.limebeck.templateEngine.parser.ast.AstLexemeParser
+import dev.limebeck.templateEngine.parser.ast.FunctionCallParser
+import dev.limebeck.templateEngine.parser.ast.throwErrorOnValue
 
-interface AstLexemeValueParser : AstLexemeParser<AstLexeme.Value> {
+interface AstLexemeValueParser {
     fun parseNext(stream: RewindableInputStream<LanguageToken>, prevValue: AstLexeme.Value): AstLexeme.Value
     fun canParseNext(stream: RewindableInputStream<LanguageToken>): Boolean
 }
+
+interface ComplexParser : AstLexemeParser<AstLexeme.Value>, AstLexemeValueParser
 
 object ValueParser : AstLexemeParser<AstLexeme.Value> {
     private val valueParsers = listOf<AstLexemeParser<AstLexeme.Value>>(
@@ -17,7 +23,9 @@ object ValueParser : AstLexemeParser<AstLexeme.Value> {
         IdentifierParser as AstLexemeParser<AstLexeme.Value>,
     )
 
-    private val partialParsers = valueParsers.filterIsInstance<AstLexemeValueParser>()
+    private val partialParsers = valueParsers.filterIsInstance<AstLexemeValueParser>() + listOf(
+        OperationParser as AstLexemeValueParser
+    )
 
     override fun canParse(stream: RewindableInputStream<LanguageToken>): Boolean {
         return valueParsers.any { it.canParse(stream) }

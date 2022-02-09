@@ -1,7 +1,10 @@
-package dev.limebeck.templateEngine.parser.ast
+package dev.limebeck.templateEngine.parser.ast.valueParsers
 
 import dev.limebeck.templateEngine.inputStream.RewindableInputStream
 import dev.limebeck.templateEngine.parser.LanguageToken
+import dev.limebeck.templateEngine.parser.ast.AstLexeme
+import dev.limebeck.templateEngine.parser.ast.AstLexemeParser
+import dev.limebeck.templateEngine.parser.ast.throwErrorOnValue
 
 object LiteralParser : AstLexemeParser<AstLexeme.Value> {
     override fun canParse(stream: RewindableInputStream<LanguageToken>): Boolean {

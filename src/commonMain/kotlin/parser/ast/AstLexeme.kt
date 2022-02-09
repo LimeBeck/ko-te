@@ -1,7 +1,5 @@
 package dev.limebeck.templateEngine.parser.ast
 
-import dev.limebeck.templateEngine.parser.LanguageToken
-
 sealed interface AstLexeme {
 
     interface Primitive : AstLexeme
@@ -65,8 +63,13 @@ enum class Associativity {
 enum class Operation(val stringValue: kotlin.String, val presence: Int, val associativity: Associativity) {
     PLUS("+", 10, Associativity.RIGHT),
     MINUS("-", 10, Associativity.RIGHT),
-    MULTIPLY("*", 10, Associativity.RIGHT),
-    DIVIDE("/", 10, Associativity.RIGHT),
+    MULTIPLY("*", 20, Associativity.RIGHT),
+    DIVIDE("/", 30, Associativity.RIGHT),
     PERCENT("%", 10, Associativity.RIGHT),
-    EQUALS("==", 10, Associativity.RIGHT)
+    EQUALS("==", 10, Associativity.RIGHT);
+
+    companion object {
+        fun find(value: String) = Operation.values()
+            .find { it.stringValue == value }
+    }
 }

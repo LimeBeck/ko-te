@@ -125,6 +125,19 @@ class RenderTest {
     }
 
     @Test
+    fun renderTemplateWithBinaryOperator() = runTest {
+        val renderer = Renderer(MapContext.EMPTY)
+
+        val templateWithoutPrecedence = """{{ 1 + 2 * 3 }}""".trimIndent()
+
+        assertEquals("7", renderer.render(templateWithoutPrecedence, null, mapOf()).getValueOrNull())
+
+        val templateWithPrecedence = """{{ 2 * 3 + 1 }}""".trimIndent()
+
+        assertEquals("7", renderer.render(templateWithPrecedence, null, mapOf()).getValueOrNull())
+    }
+
+    @Test
     fun languageReference() {
         val reference = """
             Variable access: {{ variable }}
