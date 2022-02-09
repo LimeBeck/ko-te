@@ -61,6 +61,70 @@ class RenderTest {
     }
 
     @Test
+    fun renderTemplateWithCondition() = runTest {
+        val renderer = Renderer(MapContext.EMPTY)
+
+        val template = """
+            Hello, {{ if(variable) }}WORLD{{ else }}{{ username }}{{ endif }}!
+        """.trimIndent()
+
+        val expectedOutputTrue = """
+            Hello, WORLD!
+        """.trimIndent()
+
+        assertEquals(expectedOutputTrue, renderer.render(template, null, mapOf(
+            "variable" to true
+        )).getValueOrNull())
+
+        val username = "LimeBeck"
+        val expectedOutputFalse = """
+            Hello, LimeBeck!
+        """.trimIndent()
+
+        assertEquals(expectedOutputFalse, renderer.render(template, null, mapOf(
+            "variable" to false,
+            "username" to username
+        )).getValueOrNull())
+    }
+
+    @Test
+    fun renderTemplateWithNestedCondition() = runTest {
+        val renderer = Renderer(MapContext.EMPTY)
+
+        val template = """
+            Hello, {{ if(variable) }}{{ if(nestedCondition) }}WORLD{{ else }}МИР{{ endif }}{{ else }}{{ username }}{{ endif }}!
+        """.trimIndent()
+
+        val expectedOutputTrue = """
+            Hello, WORLD!
+        """.trimIndent()
+
+        assertEquals(expectedOutputTrue, renderer.render(template, null, mapOf(
+            "variable" to true,
+            "nestedCondition" to true
+        )).getValueOrNull())
+
+        val expectedOutputNestedTrue = """
+            Hello, МИР!
+        """.trimIndent()
+
+        assertEquals(expectedOutputNestedTrue, renderer.render(template, null, mapOf(
+            "variable" to true,
+            "nestedCondition" to false
+        )).getValueOrNull())
+
+        val username = "LimeBeck"
+        val expectedOutputFalse = """
+            Hello, LimeBeck!
+        """.trimIndent()
+
+        assertEquals(expectedOutputFalse, renderer.render(template, null, mapOf(
+            "variable" to false,
+            "username" to username
+        )).getValueOrNull())
+    }
+
+    @Test
     fun languageReference() {
         val reference = """
             Variable access: {{ variable }}
