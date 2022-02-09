@@ -14,6 +14,7 @@ object CoreEvaluator : Evaluator<AstLexeme, RuntimeObject> {
             is AstLexeme.KeyAccess -> KeyAccessEvaluator.eval(lexeme, context)
             is AstLexeme.IndexAccess -> IndexAccessEvaluator.eval(lexeme, context)
             is AstLexeme.Primitive -> ValueEvaluator.eval(lexeme, context)
+            is AstLexeme.Conditional -> ConditionalEvaluator.eval(lexeme, context)
             else -> throw RuntimeException("<2a2090f2> Can`t evaluate expression $lexeme")
         } as  EvalResult<RuntimeObject>
     }
