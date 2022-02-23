@@ -39,7 +39,7 @@ object OperationParser : AstLexemeValueParser {
         val right = ExpressionParser.parse(stream)
 
         if (right is AstLexeme.InfixOperation && right.operation.presence < operation.presence) {
-            stream.seek(savepoint)
+            stream.seek(savepoint) //TODO: Take right.left position here
             return AstLexeme.InfixOperation(prevExpression, right.left, operation)
         }
 

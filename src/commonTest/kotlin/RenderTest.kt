@@ -156,11 +156,11 @@ class RenderTest {
 
         assertEquals("7", renderer.render(templateWithPrecedence, null, mapOf()).getValueOrNull())
 
-        val complexTemplate = """{{ obj.two * obj.three + obj.first }}""".trimIndent()
+        val complexTemplate = """{{ obj.two * obj.three + obj.one }}""".trimIndent()
         assertEquals(
             "7",
             renderer.render(
-                template = templateWithPrecedence,
+                template = complexTemplate,
                 resources = null,
                 data = mapOf(
                     "obj" to mapOf(
