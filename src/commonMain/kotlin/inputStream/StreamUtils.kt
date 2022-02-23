@@ -81,7 +81,20 @@ fun <T, R> InputStream<T>.skipNext(values: List<R>, comparator: (value: R, next:
 data class SimplePosition(
     override val absolutePosition: Int
 ) : InputStream.Position {
+    companion object {
+        val MOCK = SimplePosition(-1)
+    }
+
     override fun copy(): InputStream.Position = this.copy(absolutePosition = absolutePosition)
+    override fun equals(other: Any?): Boolean {
+        return if (
+            this.absolutePosition == MOCK.absolutePosition
+            || (other as? InputStream.Position)?.absolutePosition == MOCK.absolutePosition
+        )
+            true
+        else
+            super.equals(other)
+    }
 }
 
 fun <T> Collection<T>.toStream(): RewindableInputStream<T> {

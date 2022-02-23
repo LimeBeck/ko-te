@@ -1,6 +1,7 @@
 plugins {
     kotlin("multiplatform")
     id("maven-publish")
+    id("com.github.ben-manes.versions").version("0.42.0")
 }
 
 val kotlinCoroutinesVersion: String by project
