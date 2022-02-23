@@ -44,7 +44,7 @@ object IndexAccessParser : ComplexParser {
 
     override fun parseNext(
         stream: RewindableInputStream<LanguageToken>,
-        prevValue: AstLexeme.Value
+        prevExpression: AstLexeme.Expression
     ): AstLexeme.IndexAccess {
         val nextItem = stream.peek()
         val hasOpenBracket = nextItem is LanguageToken.Punctuation && nextItem.value == "["
@@ -60,7 +60,7 @@ object IndexAccessParser : ComplexParser {
         val hasClosedBracket = closedBracket is LanguageToken.Punctuation && closedBracket.value == "]"
         if (!hasClosedBracket)
             stream.throwErrorOnValue("punctuation ']'")
-        return AstLexeme.IndexAccess(prevValue, index.value.toInt())
+        return AstLexeme.IndexAccess(prevExpression, index.value.toInt())
     }
 
     override fun parse(stream: RewindableInputStream<LanguageToken>): AstLexeme.IndexAccess {

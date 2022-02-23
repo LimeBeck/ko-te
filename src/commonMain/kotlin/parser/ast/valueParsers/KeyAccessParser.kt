@@ -36,7 +36,7 @@ object KeyAccessParser : ComplexParser {
 
     override fun parseNext(
         stream: RewindableInputStream<LanguageToken>,
-        prevValue: AstLexeme.Value
+        prevExpression: AstLexeme.Expression
     ): AstLexeme.KeyAccess {
         val nextItem = stream.peek()
         val hasDot = nextItem is LanguageToken.Punctuation && nextItem.value == "."
@@ -44,7 +44,7 @@ object KeyAccessParser : ComplexParser {
             stream.throwErrorOnValue("punctuation '.'")
         stream.skipNext(1)
         val identifier = IdentifierParser.parse(stream)
-        return AstLexeme.KeyAccess(prevValue, identifier.name)
+        return AstLexeme.KeyAccess(prevExpression, identifier.name)
     }
 
     override fun parse(stream: RewindableInputStream<LanguageToken>): AstLexeme.KeyAccess {

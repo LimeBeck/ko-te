@@ -3,36 +3,36 @@ package dev.limebeck.templateEngine.parser.ast
 sealed interface AstLexeme {
 
     interface Primitive : AstLexeme
-    interface Value : AstLexeme
-    interface WritableValue : Value
+    interface Expression : AstLexeme
+    interface WritableExpression : Expression
 
-    data class TemplateSource(val text: kotlin.String) : Value
+    data class TemplateSource(val text: kotlin.String) : Expression
 
-    data class Number(val value: kotlin.Number) : Value, Primitive
+    data class Number(val value: kotlin.Number) : Expression, Primitive
 
-    data class String(val value: kotlin.String) : Value, Primitive
+    data class String(val value: kotlin.String) : Expression, Primitive
 
-    data class Boolean(val value: kotlin.Boolean) : Value, Primitive
+    data class Boolean(val value: kotlin.Boolean) : Expression, Primitive
 
     data class FunctionCall(
-        val identifier: Value,
+        val identifier: Expression,
         val args: List<FunctionArgument>
-    ) : Value
+    ) : Expression
 
     data class FunctionArgument(
         val name: kotlin.String?,
         val value: AstLexeme
     ) : AstLexeme
 
-    data class Variable(val name: kotlin.String) : WritableValue
+    data class Variable(val name: kotlin.String) : WritableExpression
 
-    data class Assign(val left: WritableValue, val right: AstLexeme) : AstLexeme
+    data class Assign(val left: WritableExpression, val right: AstLexeme) : AstLexeme
 
-    data class KeyAccess(val obj: Value, val key: kotlin.String) : WritableValue
+    data class KeyAccess(val obj: Expression, val key: kotlin.String) : WritableExpression
 
-    data class IndexAccess(val array: Value, val index: Int) : WritableValue
+    data class IndexAccess(val array: Expression, val index: Int) : WritableExpression
 
-    data class InfixOperation(val left: AstLexeme, val right: AstLexeme, val operation: Operation) : Value
+    data class InfixOperation(val left: AstLexeme, val right: AstLexeme, val operation: Operation) : Expression
 
     data class Conditional(
         val condition: AstLexeme,

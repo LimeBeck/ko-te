@@ -4,7 +4,7 @@ import dev.limebeck.templateEngine.inputStream.RewindableInputStream
 import dev.limebeck.templateEngine.inputStream.skipNext
 import dev.limebeck.templateEngine.parser.LanguageToken
 import dev.limebeck.templateEngine.parser.ast.valueParsers.IdentifierParser
-import dev.limebeck.templateEngine.parser.ast.valueParsers.ValueParser
+import dev.limebeck.templateEngine.parser.ast.valueParsers.ExpressionParser
 
 object VariableAssignParser : AstLexemeParser<AstLexeme.Assign> {
     override fun canParse(stream: RewindableInputStream<LanguageToken>): Boolean {
@@ -26,7 +26,7 @@ object VariableAssignParser : AstLexemeParser<AstLexeme.Assign> {
             next is LanguageToken.Operation && next.operation == value
         }
 
-        val value = ValueParser.parse(stream)
+        val value = ExpressionParser.parse(stream)
 
         return AstLexeme.Assign(
             left = variable,

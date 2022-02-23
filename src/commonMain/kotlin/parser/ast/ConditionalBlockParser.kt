@@ -3,7 +3,7 @@ package dev.limebeck.templateEngine.parser.ast
 import dev.limebeck.templateEngine.inputStream.RewindableInputStream
 import dev.limebeck.templateEngine.parser.LanguageToken
 import dev.limebeck.templateEngine.inputStream.skipNext
-import dev.limebeck.templateEngine.parser.ast.valueParsers.ValueParser
+import dev.limebeck.templateEngine.parser.ast.valueParsers.ExpressionParser
 
 object ConditionalBlockParser : AstLexemeParser<AstLexeme> {
     override fun canParse(stream: RewindableInputStream<LanguageToken>): Boolean {
@@ -27,7 +27,7 @@ object ConditionalBlockParser : AstLexemeParser<AstLexeme> {
 
         stream.next()
 
-        val condition = ValueParser.parse(stream)
+        val condition = ExpressionParser.parse(stream)
 
         stream.next()
 

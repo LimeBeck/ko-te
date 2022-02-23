@@ -4,7 +4,7 @@ import dev.limebeck.templateEngine.inputStream.*
 import dev.limebeck.templateEngine.parser.LanguageToken
 import dev.limebeck.templateEngine.parser.ast.valueParsers.ComplexParser
 import dev.limebeck.templateEngine.parser.ast.valueParsers.IdentifierParser
-import dev.limebeck.templateEngine.parser.ast.valueParsers.ValueParser
+import dev.limebeck.templateEngine.parser.ast.valueParsers.ExpressionParser
 
 object FunctionCallParser : ComplexParser {
     override fun canParse(stream: RewindableInputStream<LanguageToken>): Boolean {
@@ -37,7 +37,7 @@ object FunctionCallParser : ComplexParser {
 
     override fun parseNext(
         stream: RewindableInputStream<LanguageToken>,
-        prevValue: AstLexeme.Value
+        prevExpression: AstLexeme.Expression
     ): AstLexeme.FunctionCall {
         val nextItem = stream.peek()
         val hasOpenBracket = nextItem is LanguageToken.Punctuation && nextItem.value == "("
@@ -67,10 +67,10 @@ object FunctionCallParser : ComplexParser {
         }
 
         val arguments = innerValueStreams.map {
-            AstLexeme.FunctionArgument(null, ValueParser.parse(it.toStream()))
+            AstLexeme.FunctionArgument(null, ExpressionParser.parse(it.toStream()))
         }
 
-        return AstLexeme.FunctionCall(prevValue, arguments)
+        return AstLexeme.FunctionCall(prevExpression, arguments)
     }
 
     override fun parse(stream: RewindableInputStream<LanguageToken>): AstLexeme.FunctionCall {

@@ -6,7 +6,7 @@ import dev.limebeck.templateEngine.parser.ast.AstLexeme
 import dev.limebeck.templateEngine.parser.ast.AstLexemeParser
 import dev.limebeck.templateEngine.parser.ast.throwErrorOnValue
 
-object LiteralParser : AstLexemeParser<AstLexeme.Value> {
+object LiteralParser : AstLexemeParser<AstLexeme.Expression> {
     override fun canParse(stream: RewindableInputStream<LanguageToken>): Boolean {
         return stream.hasNext() && (
                 stream.peek() is LanguageToken.NumericValue
@@ -17,7 +17,7 @@ object LiteralParser : AstLexemeParser<AstLexeme.Value> {
                 )
     }
 
-    override fun parse(stream: RewindableInputStream<LanguageToken>): AstLexeme.Value {
+    override fun parse(stream: RewindableInputStream<LanguageToken>): AstLexeme.Expression {
         if (!canParse(stream)) {
             stream.throwErrorOnValue("literal identifier")
         }

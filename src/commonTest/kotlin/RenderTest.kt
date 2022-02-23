@@ -72,19 +72,27 @@ class RenderTest {
             Hello, WORLD!
         """.trimIndent()
 
-        assertEquals(expectedOutputTrue, renderer.render(template, null, mapOf(
-            "variable" to true
-        )).getValueOrNull())
+        assertEquals(
+            expectedOutputTrue, renderer.render(
+                template, null, mapOf(
+                    "variable" to true
+                )
+            ).getValueOrNull()
+        )
 
         val username = "LimeBeck"
         val expectedOutputFalse = """
             Hello, LimeBeck!
         """.trimIndent()
 
-        assertEquals(expectedOutputFalse, renderer.render(template, null, mapOf(
-            "variable" to false,
-            "username" to username
-        )).getValueOrNull())
+        assertEquals(
+            expectedOutputFalse, renderer.render(
+                template, null, mapOf(
+                    "variable" to false,
+                    "username" to username
+                )
+            ).getValueOrNull()
+        )
     }
 
     @Test
@@ -99,29 +107,41 @@ class RenderTest {
             Hello, WORLD!
         """.trimIndent()
 
-        assertEquals(expectedOutputTrue, renderer.render(template, null, mapOf(
-            "variable" to true,
-            "nestedCondition" to true
-        )).getValueOrNull())
+        assertEquals(
+            expectedOutputTrue, renderer.render(
+                template, null, mapOf(
+                    "variable" to true,
+                    "nestedCondition" to true
+                )
+            ).getValueOrNull()
+        )
 
         val expectedOutputNestedTrue = """
             Hello, МИР!
         """.trimIndent()
 
-        assertEquals(expectedOutputNestedTrue, renderer.render(template, null, mapOf(
-            "variable" to true,
-            "nestedCondition" to false
-        )).getValueOrNull())
+        assertEquals(
+            expectedOutputNestedTrue, renderer.render(
+                template, null, mapOf(
+                    "variable" to true,
+                    "nestedCondition" to false
+                )
+            ).getValueOrNull()
+        )
 
         val username = "LimeBeck"
         val expectedOutputFalse = """
             Hello, LimeBeck!
         """.trimIndent()
 
-        assertEquals(expectedOutputFalse, renderer.render(template, null, mapOf(
-            "variable" to false,
-            "username" to username
-        )).getValueOrNull())
+        assertEquals(
+            expectedOutputFalse, renderer.render(
+                template, null, mapOf(
+                    "variable" to false,
+                    "username" to username
+                )
+            ).getValueOrNull()
+        )
     }
 
     @Test
@@ -135,6 +155,22 @@ class RenderTest {
         val templateWithPrecedence = """{{ 2 * 3 + 1 }}""".trimIndent()
 
         assertEquals("7", renderer.render(templateWithPrecedence, null, mapOf()).getValueOrNull())
+
+        val complexTemplate = """{{ obj.two * obj.three + obj.first }}""".trimIndent()
+        assertEquals(
+            "7",
+            renderer.render(
+                template = templateWithPrecedence,
+                resources = null,
+                data = mapOf(
+                    "obj" to mapOf(
+                        "one" to 1,
+                        "two" to 2,
+                        "three" to 3
+                    )
+                )
+            ).getValueOrNull()
+        )
     }
 
     @Test

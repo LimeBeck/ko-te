@@ -8,31 +8,31 @@ import dev.limebeck.templateEngine.parser.ast.FunctionCallParser
 import dev.limebeck.templateEngine.parser.ast.throwErrorOnValue
 
 interface AstLexemeValueParser {
-    fun parseNext(stream: RewindableInputStream<LanguageToken>, prevValue: AstLexeme.Value): AstLexeme.Value
+    fun parseNext(stream: RewindableInputStream<LanguageToken>, prevExpression: AstLexeme.Expression): AstLexeme.Expression
     fun canParseNext(stream: RewindableInputStream<LanguageToken>): Boolean
 }
 
-interface ComplexParser : AstLexemeParser<AstLexeme.Value>, AstLexemeValueParser
+interface ComplexParser : AstLexemeParser<AstLexeme.Expression>, AstLexemeValueParser
 
-object ValueParser : AstLexemeParser<AstLexeme.Value> {
-    private val valueParsers = listOf<AstLexemeParser<AstLexeme.Value>>(
+object ExpressionParser : AstLexemeParser<AstLexeme.Expression> {
+    private val expressionParsers = listOf<AstLexemeParser<AstLexeme.Expression>>(
         LiteralParser,
-        FunctionCallParser as AstLexemeParser<AstLexeme.Value>,
-        KeyAccessParser as AstLexemeParser<AstLexeme.Value>,
-        IndexAccessParser as AstLexemeParser<AstLexeme.Value>,
-        IdentifierParser as AstLexemeParser<AstLexeme.Value>,
+        FunctionCallParser as AstLexemeParser<AstLexeme.Expression>,
+        KeyAccessParser as AstLexemeParser<AstLexeme.Expression>,
+        IndexAccessParser as AstLexemeParser<AstLexeme.Expression>,
+        IdentifierParser as AstLexemeParser<AstLexeme.Expression>,
     )
 
-    private val partialParsers = valueParsers.filterIsInstance<AstLexemeValueParser>() + listOf(
+    private val partialParsers = expressionParsers.filterIsInstance<AstLexemeValueParser>() + listOf(
         OperationParser as AstLexemeValueParser
     )
 
     override fun canParse(stream: RewindableInputStream<LanguageToken>): Boolean {
-        return valueParsers.any { it.canParse(stream) }
+        return expressionParsers.any { it.canParse(stream) }
     }
 
-    override fun parse(stream: RewindableInputStream<LanguageToken>): AstLexeme.Value {
-        var value = valueParsers.find { it.canParse(stream) }?.parse(stream)
+    override fun parse(stream: RewindableInputStream<LanguageToken>): AstLexeme.Expression {
+        var value = expressionParsers.find { it.canParse(stream) }?.parse(stream)
             ?: stream.throwErrorOnValue("value")
 
         while (stream.hasNext()) {

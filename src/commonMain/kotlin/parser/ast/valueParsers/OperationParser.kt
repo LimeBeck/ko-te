@@ -16,14 +16,14 @@ object OperationParser : AstLexemeValueParser {
         val hasOperation = nextItem is LanguageToken.Operation
         if (hasOperation) {
             stream.next()
-            return@recoverable ValueParser.canParse(stream)
+            return@recoverable ExpressionParser.canParse(stream)
         }
         return@recoverable false
     }
 
     override fun parseNext(
         stream: RewindableInputStream<LanguageToken>,
-        prevValue: AstLexeme.Value
+        prevExpression: AstLexeme.Expression
     ): AstLexeme.InfixOperation {
         val nextItem = stream.peek()
         val hasOperation = nextItem is LanguageToken.Operation
@@ -34,13 +34,15 @@ object OperationParser : AstLexemeValueParser {
             ?: stream.throwErrorOnValue("operation")
 
         stream.next()
+        val savepoint = stream.currentPosition.absolutePosition
 
-        val right = ValueParser.parse(stream)
+        val right = ExpressionParser.parse(stream)
 
-        if (prevValue is AstLexeme.InfixOperation && prevValue.operation.presence < operation.presence) {
-            return AstLexeme.InfixOperation(right, prevValue, operation)
+        if (right is AstLexeme.InfixOperation && right.operation.presence < operation.presence) {
+            stream.seek(savepoint)
+            return AstLexeme.InfixOperation(prevExpression, right.left, operation)
         }
 
-        return AstLexeme.InfixOperation(prevValue, right, operation)
+        return AstLexeme.InfixOperation(prevExpression, right, operation)
     }
 }
