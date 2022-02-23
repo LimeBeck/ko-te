@@ -28,6 +28,20 @@ operator fun Number.times(other: Number): Number =
         this.toFloat() * other.toFloat()
     }
 
+operator fun Number.rem(other: Number): Number =
+    if (this.isInteger() && other.isInteger()) {
+        this.toInt() % other.toInt()
+    } else {
+        this.toFloat() % other.toFloat()
+    }
+
+operator fun Number.div(other: Number): Number =
+    if (this.isInteger() && other.isInteger()) {
+        this.toInt() / other.toInt()
+    } else {
+        this.toFloat() / other.toFloat()
+    }
+
 object OperationEvaluator : Evaluator<AstLexeme.InfixOperation, RuntimeObject> {
     override fun eval(lexeme: AstLexeme.InfixOperation, context: RuntimeContext): EvalResult<RuntimeObject> {
         val left = CoreEvaluator.eval(lexeme.left, context)
@@ -43,15 +57,23 @@ object OperationEvaluator : Evaluator<AstLexeme.InfixOperation, RuntimeObject> {
             Operation.MULTIPLY -> when {
                 left.result is RuntimeObject.NumberWrapper &&
                         right.result is RuntimeObject.NumberWrapper -> RuntimeObject.NumberWrapper(left.result.number * right.result.number)
-                else -> throw RuntimeException("<015cca01>> $lexeme can`t be evaluated")
+                else -> throw RuntimeException("<015cca01> $lexeme can`t be evaluated")
             }
             Operation.MINUS -> when {
                 left.result is RuntimeObject.NumberWrapper &&
                         right.result is RuntimeObject.NumberWrapper -> RuntimeObject.NumberWrapper(left.result.number - right.result.number)
-                else -> throw RuntimeException("<a956ce5b>> $lexeme can`t be evaluated")
+                else -> throw RuntimeException("<a956ce5b> $lexeme can`t be evaluated")
             }
-            Operation.DIVIDE -> TODO()
-            Operation.PERCENT -> TODO()
+            Operation.DIVIDE ->  when {
+                left.result is RuntimeObject.NumberWrapper &&
+                        right.result is RuntimeObject.NumberWrapper -> RuntimeObject.NumberWrapper(left.result.number / right.result.number)
+                else -> throw RuntimeException("<6da4d6d4> $lexeme can`t be evaluated")
+            }
+            Operation.PERCENT -> when {
+                left.result is RuntimeObject.NumberWrapper &&
+                        right.result is RuntimeObject.NumberWrapper -> RuntimeObject.NumberWrapper(left.result.number % right.result.number)
+                else -> throw RuntimeException("<6da4d6d4> $lexeme can`t be evaluated")
+            }
             Operation.EQUALS -> TODO()
         }
         return EvalResult(result)
