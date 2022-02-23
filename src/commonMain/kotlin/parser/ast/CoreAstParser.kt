@@ -22,7 +22,7 @@ object CoreAstParser : AstLexemeParser<AstLexeme> {
         val nextToken = stream.peek()
         return when {
             nextToken is LanguageToken.TemplateSource -> {
-                AstLexeme.TemplateSource(nextToken.text)
+                AstLexeme.TemplateSource(stream.currentPosition.copy(), nextToken.text)
             }
             ConditionalBlockParser.canParse(stream) -> {
                 ConditionalBlockParser.parse(stream)

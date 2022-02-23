@@ -18,7 +18,8 @@ object IdentifierParser : AstLexemeParser<AstLexeme.Variable> {
         val next = stream.peek() as LanguageToken.Identifier
 
         return AstLexeme.Variable(
-            name = next.name
+            name = next.name,
+            streamPosition = stream.currentPosition.copy()
         )
     }
 }

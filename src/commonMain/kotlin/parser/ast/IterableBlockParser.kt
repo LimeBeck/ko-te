@@ -22,7 +22,7 @@ object IterableBlockParser : AstLexemeParser<AstLexeme> {
         val possibleItem = stream.peek()
         if (possibleItem !is LanguageToken.Identifier)
             stream.throwErrorOnValue("identifier")
-        val item = AstLexeme.Variable(possibleItem.name)
+        val item = AstLexeme.Variable(stream.currentPosition.copy(), possibleItem.name)
 
         stream.next()
 
@@ -35,7 +35,7 @@ object IterableBlockParser : AstLexemeParser<AstLexeme> {
         val possibleIterable = stream.peek()
         if (possibleIterable !is LanguageToken.Identifier)
             stream.throwErrorOnValue("identifier")
-        val iterable = AstLexeme.Variable(possibleIterable.name)
+        val iterable = AstLexeme.Variable(stream.currentPosition.copy(), possibleIterable.name)
 
         stream.next()
 
@@ -55,6 +55,7 @@ object IterableBlockParser : AstLexemeParser<AstLexeme> {
                 stream.throwErrorOnValue("endfor")
             }
             return AstLexeme.Iterator(
+                streamPosition = stream.currentPosition.copy(),
                 item = item,
                 iterable = iterable,
                 body = body

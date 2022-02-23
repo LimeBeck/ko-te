@@ -22,12 +22,12 @@ object LiteralParser : AstLexemeParser<AstLexeme.Expression> {
             stream.throwErrorOnValue("literal identifier")
         }
         return when (val next = stream.peek()) {
-            is LanguageToken.StringValue -> AstLexeme.String(next.value)
-            is LanguageToken.NumericValue -> AstLexeme.Number(next.value)
+            is LanguageToken.StringValue -> AstLexeme.String(stream.currentPosition.copy(), next.value)
+            is LanguageToken.NumericValue -> AstLexeme.Number(stream.currentPosition.copy(), next.value)
             is LanguageToken.Keyword -> {
                 when (next.name.lowercase()) {
-                    "true" -> AstLexeme.Boolean(true)
-                    "false" -> AstLexeme.Boolean(false)
+                    "true" -> AstLexeme.Boolean(stream.currentPosition.copy(), true)
+                    "false" -> AstLexeme.Boolean(stream.currentPosition.copy(), false)
                     else -> stream.throwErrorOnValue("boolean value")
                 }
             }

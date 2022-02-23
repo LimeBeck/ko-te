@@ -67,10 +67,10 @@ object FunctionCallParser : ComplexParser {
         }
 
         val arguments = innerValueStreams.map {
-            AstLexeme.FunctionArgument(null, ExpressionParser.parse(it.toStream()))
+            AstLexeme.FunctionArgument(stream.currentPosition.copy(), null, ExpressionParser.parse(it.toStream()))
         }
 
-        return AstLexeme.FunctionCall(prevExpression, arguments)
+        return AstLexeme.FunctionCall(stream.currentPosition.copy(), prevExpression, arguments)
     }
 
     override fun parse(stream: RewindableInputStream<LanguageToken>): AstLexeme.FunctionCall {

@@ -1,3 +1,5 @@
+import dev.limebeck.templateEngine.inputStream.InputStream
+import dev.limebeck.templateEngine.inputStream.SimplePosition
 import dev.limebeck.templateEngine.parser.ast.AstLexeme
 import utils.parseAst
 import utils.runTest
@@ -25,7 +27,7 @@ class AstParserTest {
         val list = astLexemes.body.toList()
 
         assertEquals(1, list.size)
-        assertEquals(listOf(AstLexeme.String("World")), list)
+        assertEquals(listOf(AstLexeme.String(SimplePosition.MOCK, "World")), list)
     }
 
     @Test
@@ -37,8 +39,8 @@ class AstParserTest {
 
         assertEquals(2, list.size)
         val expected = listOf(
-            AstLexeme.Number(123),
-            AstLexeme.Number(123.456F)
+            AstLexeme.Number(SimplePosition.MOCK, 123),
+            AstLexeme.Number(SimplePosition.MOCK, 123.456F)
         )
         assertContentEquals(expected, list)
     }
@@ -51,11 +53,12 @@ class AstParserTest {
         val list = astLexemes.body.toList()
 
         assertEquals(2, list.size)
-        assertEquals(
+        assertContentEquals(
             listOf(
-                AstLexeme.Boolean(true),
-                AstLexeme.Boolean(false)
-            ).toSet(), list.toSet()
+                AstLexeme.Boolean(SimplePosition.MOCK, true),
+                AstLexeme.Boolean(SimplePosition.MOCK, false)
+            ),
+            list
         )
     }
 
@@ -70,8 +73,9 @@ class AstParserTest {
         assertEquals(
             listOf(
                 AstLexeme.Assign(
-                    left = AstLexeme.Variable("name"),
-                    right = AstLexeme.String("World")
+                    SimplePosition.MOCK,
+                    left = AstLexeme.Variable(SimplePosition.MOCK, "name"),
+                    right = AstLexeme.String(SimplePosition.MOCK, "World")
                 )
             ),
             list
@@ -89,8 +93,9 @@ class AstParserTest {
         assertEquals(
             listOf(
                 AstLexeme.Assign(
-                    left = AstLexeme.Variable("name"),
-                    right = AstLexeme.Variable("variable")
+                    SimplePosition.MOCK,
+                    left = AstLexeme.Variable(SimplePosition.MOCK, "name"),
+                    right = AstLexeme.Variable(SimplePosition.MOCK, "variable")
                 )
             ),
             list
@@ -108,15 +113,18 @@ class AstParserTest {
         assertEquals(
             listOf(
                 AstLexeme.FunctionCall(
-                    identifier = AstLexeme.Variable("function"),
+                    streamPosition = SimplePosition.MOCK,
+                    identifier = AstLexeme.Variable(SimplePosition.MOCK, "function"),
                     args = listOf(
                         AstLexeme.FunctionArgument(
+                            SimplePosition.MOCK,
                             name = null,
-                            value = AstLexeme.String("first"),
+                            value = AstLexeme.String(SimplePosition.MOCK, "first"),
                         ),
                         AstLexeme.FunctionArgument(
+                            SimplePosition.MOCK,
                             name = null,
-                            value = AstLexeme.Number(2),
+                            value = AstLexeme.Number(SimplePosition.MOCK, 2),
                         )
                     )
                 )
@@ -133,7 +141,15 @@ class AstParserTest {
         val list = astLexemes.body.toList()
 
         assertEquals(1, list.size)
-        assertEquals(listOf(AstLexeme.KeyAccess(obj = AstLexeme.Variable("object"), key = "key")), list)
+        assertEquals(
+            listOf(
+                AstLexeme.KeyAccess(
+                    SimplePosition.MOCK,
+                    obj = AstLexeme.Variable(SimplePosition.MOCK, "object"),
+                    key = "key"
+                )
+            ), list
+        )
     }
 
     @Test
@@ -147,8 +163,10 @@ class AstParserTest {
         assertEquals(
             listOf(
                 AstLexeme.KeyAccess(
+                    SimplePosition.MOCK,
                     obj = AstLexeme.KeyAccess(
-                        obj = AstLexeme.Variable("object"),
+                        SimplePosition.MOCK,
+                        obj = AstLexeme.Variable(SimplePosition.MOCK, "object"),
                         key = "key1"
                     ),
                     key = "key2"
@@ -168,7 +186,8 @@ class AstParserTest {
         assertEquals(
             listOf(
                 AstLexeme.IndexAccess(
-                    array = AstLexeme.Variable("object"),
+                    SimplePosition.MOCK,
+                    array = AstLexeme.Variable(SimplePosition.MOCK, "object"),
                     index = 0
                 )
             ), list
@@ -186,8 +205,10 @@ class AstParserTest {
         assertEquals(
             listOf(
                 AstLexeme.IndexAccess(
+                    SimplePosition.MOCK,
                     array = AstLexeme.IndexAccess(
-                        array = AstLexeme.Variable("object"),
+                        SimplePosition.MOCK,
+                        array = AstLexeme.Variable(SimplePosition.MOCK, "object"),
                         index = 0
                     ),
                     index = 2
@@ -207,9 +228,12 @@ class AstParserTest {
         assertEquals(
             listOf(
                 AstLexeme.IndexAccess(
+                    SimplePosition.MOCK,
                     array = AstLexeme.KeyAccess(
+                        SimplePosition.MOCK,
                         obj = AstLexeme.IndexAccess(
-                            array = AstLexeme.Variable("object"),
+                            SimplePosition.MOCK,
+                            array = AstLexeme.Variable(SimplePosition.MOCK, "object"),
                             index = 0
                         ),
                         key = "key"
@@ -231,17 +255,25 @@ class AstParserTest {
         assertEquals(
             listOf(
                 AstLexeme.FunctionCall(
+                    SimplePosition.MOCK,
                     identifier = AstLexeme.FunctionCall(
+                        SimplePosition.MOCK,
                         identifier = AstLexeme.KeyAccess(
-                            obj = AstLexeme.Variable("object"),
+                            SimplePosition.MOCK,
+                            obj = AstLexeme.Variable(SimplePosition.MOCK, "object"),
                             key = "key"
                         ),
                         args = listOf()
                     ),
                     args = listOf(
                         AstLexeme.FunctionArgument(
+                            SimplePosition.MOCK,
                             name = null,
-                            value = AstLexeme.KeyAccess(obj = AstLexeme.Variable(name = "another"), key = "key")
+                            value = AstLexeme.KeyAccess(
+                                SimplePosition.MOCK,
+                                obj = AstLexeme.Variable(SimplePosition.MOCK, name = "another"),
+                                key = "key"
+                            )
                         )
                     )
                 )
@@ -260,9 +292,14 @@ class AstParserTest {
         assertEquals(
             listOf(
                 AstLexeme.Conditional(
-                    condition = AstLexeme.FunctionCall(AstLexeme.Variable("variable"), listOf()),
-                    then = listOf(AstLexeme.TemplateSource(" true ")),
-                    another = listOf(AstLexeme.TemplateSource(" false "))
+                    streamPosition = SimplePosition.MOCK,
+                    condition = AstLexeme.FunctionCall(
+                        streamPosition = SimplePosition.MOCK,
+                        identifier = AstLexeme.Variable(SimplePosition.MOCK, "variable"),
+                        args = listOf()
+                    ),
+                    then = listOf(AstLexeme.TemplateSource(SimplePosition.MOCK, " true ")),
+                    another = listOf(AstLexeme.TemplateSource(SimplePosition.MOCK, " false "))
                 )
             ), list
         )
@@ -279,8 +316,9 @@ class AstParserTest {
         assertEquals(
             listOf(
                 AstLexeme.Conditional(
-                    condition = AstLexeme.Variable("variable"),
-                    then = listOf(AstLexeme.TemplateSource(" true ")),
+                    SimplePosition.MOCK,
+                    condition = AstLexeme.Variable(SimplePosition.MOCK, "variable"),
+                    then = listOf(AstLexeme.TemplateSource(SimplePosition.MOCK, " true ")),
                     another = null
                 )
             ), list
@@ -300,12 +338,13 @@ class AstParserTest {
         assertEquals(
             listOf(
                 AstLexeme.Iterator(
-                    iterable = AstLexeme.Variable("array"),
-                    item = AstLexeme.Variable("variable"),
+                    SimplePosition.MOCK,
+                    iterable = AstLexeme.Variable(SimplePosition.MOCK, "array"),
+                    item = AstLexeme.Variable(SimplePosition.MOCK, "variable"),
                     body = listOf(
-                        AstLexeme.TemplateSource("\nValue: "),
-                        AstLexeme.Variable("variable"),
-                        AstLexeme.TemplateSource("\n"),
+                        AstLexeme.TemplateSource(SimplePosition.MOCK, "\nValue: "),
+                        AstLexeme.Variable(SimplePosition.MOCK, "variable"),
+                        AstLexeme.TemplateSource(SimplePosition.MOCK, "\n"),
                     )
                 )
             ), list

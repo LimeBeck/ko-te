@@ -29,6 +29,7 @@ object VariableAssignParser : AstLexemeParser<AstLexeme.Assign> {
         val value = ExpressionParser.parse(stream)
 
         return AstLexeme.Assign(
+            streamPosition = stream.currentPosition.copy(),
             left = variable,
             right = value
         )

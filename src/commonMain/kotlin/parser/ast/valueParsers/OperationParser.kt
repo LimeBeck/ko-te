@@ -40,9 +40,19 @@ object OperationParser : AstLexemeValueParser {
 
         if (right is AstLexeme.InfixOperation && right.operation.presence < operation.presence) {
             stream.seek(savepoint) //TODO: Take right.left position here
-            return AstLexeme.InfixOperation(prevExpression, right.left, operation)
+            return AstLexeme.InfixOperation(
+                streamPosition = stream.currentPosition.copy(),
+                left = prevExpression,
+                right = right.left,
+                operation = operation
+            )
         }
 
-        return AstLexeme.InfixOperation(prevExpression, right, operation)
+        return AstLexeme.InfixOperation(
+            streamPosition = stream.currentPosition.copy(),
+            left = prevExpression,
+            right = right,
+            operation = operation
+        )
     }
 }
