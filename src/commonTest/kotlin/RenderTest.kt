@@ -51,15 +51,15 @@ class RenderTest {
             ).getValueOrNull()?.trim()
         )
 
-        val simpleTextTemplate = """
-            {{ let name = "World" }}
-            Hello, {{ name }}!
-        """.trimIndent()
-
         assertEquals(
             expectedOutput,
             renderer.render(
-                template = simpleTextTemplate,
+                template = """
+                    {{ 
+                        let name = "World" 
+                        "Hello, " + name + "!"
+                    }}
+                """.trimIndent(),
                 resources = null,
                 data = mapOf()
             ).getValueOrNull()?.trim()
