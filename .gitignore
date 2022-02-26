@@ -1,3 +1,5 @@
 .idea
 .gradle
 build
+/nohup.out
+/kotlin-js-store/yarn.lock

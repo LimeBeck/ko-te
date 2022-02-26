@@ -66,8 +66,8 @@ jobs:
       - name: Publish to GitHub Packages
         run: ./gradlew publish
         env:
-          USERNAME: ${{ github.actor }}
-          PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          REPO_USERNAME: ${{ github.actor }}
+          REPO_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
 
   publish-test-results:
     name: "Publish Unit Tests Results"
