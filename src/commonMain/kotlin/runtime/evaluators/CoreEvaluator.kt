@@ -6,7 +6,7 @@ import dev.limebeck.templateEngine.runtime.RuntimeException
 import dev.limebeck.templateEngine.runtime.RuntimeObject
 
 object CoreEvaluator : Evaluator<AstLexeme, RuntimeObject> {
-    override fun eval(lexeme: AstLexeme, context: RuntimeContext): EvalResult<RuntimeObject> {
+    override suspend fun eval(lexeme: AstLexeme, context: RuntimeContext): EvalResult<RuntimeObject> {
         return when (lexeme) {
             is AstLexeme.TemplateSource -> TemplateEvaluator.eval(lexeme, context)
             is AstLexeme.Variable -> VariableAccessEvaluator.eval(lexeme, context)

@@ -1,4 +1,4 @@
-import dev.limebeck.templateEngine.Renderer
+import dev.limebeck.templateEngine.KoTeRenderer
 import dev.limebeck.templateEngine.Resource
 import dev.limebeck.templateEngine.runtime.RuntimeException
 import dev.limebeck.templateEngine.runtime.RuntimeObject
@@ -9,7 +9,7 @@ import kotlin.test.assertEquals
 class RenderTest {
     @Test
     fun valueAccess() = runTest {
-        val renderer = Renderer()
+        val renderer = KoTeRenderer()
 
         val simpleTextTemplate = """
             Hello, {{ name }}!
@@ -33,7 +33,7 @@ class RenderTest {
 
     @Test
     fun variableAssign() = runTest {
-        val renderer = Renderer()
+        val renderer = KoTeRenderer()
 
         val expectedOutput = """
             Hello, World!
@@ -68,7 +68,7 @@ class RenderTest {
 
     @Test
     fun functionCall() = runTest {
-        val renderer = Renderer {
+        val renderer = KoTeRenderer {
             mapOf(
                 "uppercase" to RuntimeObject.CallableWrapper.from { args, ctx ->
                     val value = args.first()
@@ -98,7 +98,7 @@ class RenderTest {
 
     @Test
     fun simpleCondition() = runTest {
-        val renderer = Renderer()
+        val renderer = KoTeRenderer()
 
         val template = """
             Hello, {{ if(variable) }}WORLD{{ else }}{{ username }}{{ endif }}!
@@ -133,7 +133,7 @@ class RenderTest {
 
     @Test
     fun nestedCondition() = runTest {
-        val renderer = Renderer()
+        val renderer = KoTeRenderer()
 
         val template = """
             Hello, {{ if(variable) }}{{ if(nestedCondition) }}WORLD{{ else }}МИР{{ endif }}{{ else }}{{ username }}{{ endif }}!
@@ -182,7 +182,7 @@ class RenderTest {
 
     @Test
     fun binaryOperator() = runTest {
-        val renderer = Renderer()
+        val renderer = KoTeRenderer()
 
         val templateWithoutPrecedence = """{{ 1 + 2 * 3 }}""".trimIndent()
 
@@ -211,9 +211,9 @@ class RenderTest {
 
     @Test
     fun importTemplate() = runTest {
-        val renderer = Renderer()
+        val renderer = KoTeRenderer()
 
-        val template = """{{ import "resource.kote" }}""".trimIndent()
+        val template = """{{ import "resource" }}""".trimIndent()
 
         assertEquals(
             "Some template",

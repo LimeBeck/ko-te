@@ -1,9 +1,16 @@
 package dev.limebeck.templateEngine.runtime
 
 import dev.limebeck.templateEngine.Resource
+import dev.limebeck.templateEngine.parser.ParserError
+import dev.limebeck.templateEngine.Result
+
+interface Renderer {
+    suspend fun render(templateName: String, context: RuntimeContext): Result<String, ParserError>
+}
 
 interface RuntimeContext {
     val resources: List<Resource>
+    val renderer: Renderer
     fun get(key: String): RuntimeObject
     fun set(key: String, obj: RuntimeObject)
     operator fun plus(another: RuntimeContext): RuntimeContext
@@ -78,12 +85,9 @@ data class RuntimeException(
 
 class MapContext(
     predefinedRuntimeObjects: Map<String, RuntimeObject>,
+    override val renderer: Renderer,
     override val resources: List<Resource> = emptyList()
 ) : RuntimeContext {
-    companion object {
-        val EMPTY = MapContext(mutableMapOf())
-    }
-
     private val runtimeObjects = predefinedRuntimeObjects.toMutableMap()
 
     override fun get(key: String): RuntimeObject {
@@ -97,8 +101,9 @@ class MapContext(
     override fun plus(another: RuntimeContext): RuntimeContext {
         return if (another is MapContext)
             MapContext(
-                (this.runtimeObjects + another.runtimeObjects).toMutableMap(),
-                this.resources + another.resources
+                predefinedRuntimeObjects = (this.runtimeObjects + another.runtimeObjects).toMutableMap(),
+                renderer = this.renderer,
+                resources = this.resources + another.resources
             )
         else throw RuntimeException("<c99fdcd8> Can`t merge contexts $this and $another")
     }
@@ -106,10 +111,11 @@ class MapContext(
     operator fun plus(another: Map<String, RuntimeObject>): RuntimeContext {
         return MapContext(
             (this.runtimeObjects + another).toMutableMap(),
+            this.renderer,
             this.resources
         )
     }
 }
 
-fun Map<String, RuntimeObject>.asContext() =
-    MapContext(this.toMutableMap(), emptyList())
+fun Map<String, RuntimeObject>.asContext(renderer: Renderer) =
+    MapContext(this.toMutableMap(), renderer, emptyList())

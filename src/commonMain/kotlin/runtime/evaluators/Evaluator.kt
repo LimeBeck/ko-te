@@ -5,7 +5,7 @@ import dev.limebeck.templateEngine.runtime.RuntimeContext
 import dev.limebeck.templateEngine.runtime.RuntimeObject
 
 interface Evaluator<T: AstLexeme, Result: RuntimeObject> {
-    fun eval(lexeme: T, context: RuntimeContext): EvalResult<Result>
+    suspend fun eval(lexeme: T, context: RuntimeContext): EvalResult<Result>
 }
 
 data class EvalResult<R>(

@@ -5,7 +5,7 @@ import dev.limebeck.templateEngine.runtime.RuntimeContext
 import dev.limebeck.templateEngine.runtime.RuntimeObject
 
 object ValueAccessEvaluator : Evaluator<AstLexeme.Primitive, RuntimeObject> {
-    override fun eval(lexeme: AstLexeme.Primitive, context: RuntimeContext): EvalResult<RuntimeObject> {
+    override suspend fun eval(lexeme: AstLexeme.Primitive, context: RuntimeContext): EvalResult<RuntimeObject> {
         val result = when (lexeme) {
             is AstLexeme.String -> RuntimeObject.StringWrapper(lexeme.value)
             is AstLexeme.Number -> RuntimeObject.NumberWrapper(lexeme.value)

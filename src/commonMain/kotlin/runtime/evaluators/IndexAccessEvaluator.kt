@@ -6,7 +6,7 @@ import dev.limebeck.templateEngine.runtime.RuntimeException
 import dev.limebeck.templateEngine.runtime.RuntimeObject
 
 object IndexAccessEvaluator : Evaluator<AstLexeme.IndexAccess, RuntimeObject> {
-    override fun eval(lexeme: AstLexeme.IndexAccess, context: RuntimeContext): EvalResult<RuntimeObject> {
+    override suspend fun eval(lexeme: AstLexeme.IndexAccess, context: RuntimeContext): EvalResult<RuntimeObject> {
         val value = CoreEvaluator.eval(lexeme.array, context)
         val index = lexeme.index
         when (value.result) {

@@ -6,7 +6,7 @@ import dev.limebeck.templateEngine.runtime.RuntimeObject
 import dev.limebeck.templateEngine.runtime.wrap
 
 object AssignEvaluator : Evaluator<AstLexeme.Assign, RuntimeObject> {
-    override fun eval(lexeme: AstLexeme.Assign, context: RuntimeContext): EvalResult<RuntimeObject> {
+    override suspend fun eval(lexeme: AstLexeme.Assign, context: RuntimeContext): EvalResult<RuntimeObject> {
         val value = CoreEvaluator.eval(lexeme.right, context).result.wrap()
         when (lexeme.left) {
             is AstLexeme.Variable -> context.set(lexeme.left.name, value)

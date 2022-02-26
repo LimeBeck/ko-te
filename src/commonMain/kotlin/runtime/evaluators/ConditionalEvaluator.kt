@@ -6,7 +6,7 @@ import dev.limebeck.templateEngine.runtime.RuntimeException
 import dev.limebeck.templateEngine.runtime.RuntimeObject
 
 object ConditionalEvaluator : Evaluator<AstLexeme.Conditional, RuntimeObject> {
-    override fun eval(lexeme: AstLexeme.Conditional, context: RuntimeContext): EvalResult<RuntimeObject> {
+    override suspend fun eval(lexeme: AstLexeme.Conditional, context: RuntimeContext): EvalResult<RuntimeObject> {
         val conditionResult = CoreEvaluator.eval(lexeme.condition, context)
 
         if (conditionResult.result !is RuntimeObject.BooleanWrapper) {

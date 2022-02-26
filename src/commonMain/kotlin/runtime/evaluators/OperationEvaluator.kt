@@ -43,7 +43,7 @@ operator fun Number.div(other: Number): Number =
     }
 
 object OperationEvaluator : Evaluator<AstLexeme.InfixOperation, RuntimeObject> {
-    override fun eval(lexeme: AstLexeme.InfixOperation, context: RuntimeContext): EvalResult<RuntimeObject> {
+    override suspend fun eval(lexeme: AstLexeme.InfixOperation, context: RuntimeContext): EvalResult<RuntimeObject> {
         val left = CoreEvaluator.eval(lexeme.left, context)
         val right = CoreEvaluator.eval(lexeme.right, context)
         val result = when (lexeme.operation) {

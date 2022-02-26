@@ -6,7 +6,7 @@ import dev.limebeck.templateEngine.runtime.RuntimeException
 import dev.limebeck.templateEngine.runtime.RuntimeObject
 
 object FunctionCallEvaluator : Evaluator<AstLexeme.FunctionCall, RuntimeObject> {
-    override fun eval(lexeme: AstLexeme.FunctionCall, context: RuntimeContext): EvalResult<RuntimeObject> {
+    override suspend fun eval(lexeme: AstLexeme.FunctionCall, context: RuntimeContext): EvalResult<RuntimeObject> {
         val possibleFunction = when (lexeme.identifier) {
             is AstLexeme.Variable -> context.get(lexeme.identifier.name)
             else -> CoreEvaluator.eval(lexeme.identifier, context).result

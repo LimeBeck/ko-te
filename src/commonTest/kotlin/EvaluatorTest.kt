@@ -1,19 +1,27 @@
+import dev.limebeck.templateEngine.Result
+import dev.limebeck.templateEngine.parser.ParserError
 import dev.limebeck.templateEngine.render
-import dev.limebeck.templateEngine.runtime.MapContext
-import dev.limebeck.templateEngine.runtime.RuntimeObject
-import dev.limebeck.templateEngine.runtime.SimpleRuntimeEngine
-import dev.limebeck.templateEngine.runtime.asContext
+import dev.limebeck.templateEngine.runtime.*
 import utils.parseAst
 import utils.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class EvaluatorTest {
+    private val renderer = object : Renderer {
+        override suspend fun render(templateName: String, context: RuntimeContext): Result<String, ParserError> {
+            TODO("<cc8f3059> Not yet implemented")
+        }
+    }
+
     @Test
     fun evaluateSimpleTemplate() = runTest {
         val simpleTemplate = """Simple Template"""
         val runtimeEngine = SimpleRuntimeEngine
-        val result = runtimeEngine.evaluateProgram(simpleTemplate.parseAst(), MapContext.EMPTY)
+        val result = runtimeEngine.evaluateProgram(
+                root = simpleTemplate.parseAst(),
+                context = mapOf<String, RuntimeObject>().asContext(renderer)
+            )
         assertEquals(simpleTemplate, result.render())
     }
 
@@ -23,7 +31,7 @@ class EvaluatorTest {
         val runtimeEngine = SimpleRuntimeEngine
         val result = runtimeEngine.evaluateProgram(
             template.parseAst(),
-            mapOf("variable" to RuntimeObject.StringWrapper("value")).asContext()
+            mapOf("variable" to RuntimeObject.StringWrapper("value")).asContext(renderer)
         )
         assertEquals("Value: value", result.render())
     }
@@ -34,7 +42,7 @@ class EvaluatorTest {
         val runtimeEngine = SimpleRuntimeEngine
         val result = runtimeEngine.evaluateProgram(
             template.parseAst(),
-            MapContext.EMPTY
+            context = mapOf<String, RuntimeObject>().asContext(renderer)
         )
         assertEquals("value100", result.render())
     }
@@ -51,7 +59,7 @@ class EvaluatorTest {
                     val name = args.first() as RuntimeObject.StringWrapper
                     RuntimeObject.StringWrapper("Hello, ${name.string}")
                 }
-            ).asContext()
+            ).asContext(renderer)
         )
         assertEquals("Hello, World", result.render())
     }
@@ -69,7 +77,7 @@ class EvaluatorTest {
                         "${(args1.first() as RuntimeObject.StringWrapper).string}, ${(args2.first() as RuntimeObject.StringWrapper).string}"
                     }
                 }
-            ).asContext()
+            ).asContext(renderer)
         )
         assertEquals("Hello, World", result.render())
     }
