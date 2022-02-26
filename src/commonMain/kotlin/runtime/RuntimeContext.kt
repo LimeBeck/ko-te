@@ -1,6 +1,9 @@
 package dev.limebeck.templateEngine.runtime
 
+import dev.limebeck.templateEngine.Resource
+
 interface RuntimeContext {
+    val resources: List<Resource>
     fun get(key: String): RuntimeObject
     fun set(key: String, obj: RuntimeObject)
     operator fun plus(another: RuntimeContext): RuntimeContext
@@ -33,18 +36,19 @@ fun Map<String, Any>.wrapAll(): Map<String, RuntimeObject> =
 
 sealed interface RuntimeObject {
     class CallableWrapper(
-        val block: (args: List<RuntimeObject>) -> RuntimeObject
+        val block: (args: List<RuntimeObject>, context: RuntimeContext) -> RuntimeObject
     ) : RuntimeObject {
         companion object {
-            fun from(block: (args: List<RuntimeObject>) -> Any): CallableWrapper {
-                return CallableWrapper { args: List<RuntimeObject> ->
-                    block(args).wrap()
+            fun from(block: (args: List<RuntimeObject>, context: RuntimeContext) -> Any): CallableWrapper {
+                return CallableWrapper { args: List<RuntimeObject>, context: RuntimeContext ->
+                    block(args, context).wrap()
                 }
             }
         }
     }
 
     object Null : RuntimeObject
+    object Nothing : RuntimeObject
 
     class ObjectWrapper(
         val obj: Map<String, RuntimeObject>
@@ -72,26 +76,40 @@ data class RuntimeException(
     val underlyingException: Throwable? = null
 ) : Throwable(reason, underlyingException)
 
-data class MapContext(
-    private val context: MutableMap<String, Any>
+class MapContext(
+    predefinedRuntimeObjects: Map<String, RuntimeObject>,
+    override val resources: List<Resource> = emptyList()
 ) : RuntimeContext {
     companion object {
         val EMPTY = MapContext(mutableMapOf())
     }
 
+    private val runtimeObjects = predefinedRuntimeObjects.toMutableMap()
+
     override fun get(key: String): RuntimeObject {
-        return context[key] as? RuntimeObject ?: throw RuntimeException("<52662afc> Context not found by key '$key'")
+        return runtimeObjects[key] ?: throw RuntimeException("<52662afc> Context not found by key '$key'")
     }
 
     override fun set(key: String, obj: RuntimeObject) {
-        context[key] = obj
+        runtimeObjects[key] = obj
     }
 
     override fun plus(another: RuntimeContext): RuntimeContext {
         return if (another is MapContext)
-            MapContext((this.context + another.context).toMutableMap())
+            MapContext(
+                (this.runtimeObjects + another.runtimeObjects).toMutableMap(),
+                this.resources + another.resources
+            )
         else throw RuntimeException("<c99fdcd8> Can`t merge contexts $this and $another")
+    }
+
+    operator fun plus(another: Map<String, RuntimeObject>): RuntimeContext {
+        return MapContext(
+            (this.runtimeObjects + another).toMutableMap(),
+            this.resources
+        )
     }
 }
 
-fun Map<String, RuntimeObject>.asContext() = MapContext(this.toMutableMap())
+fun Map<String, RuntimeObject>.asContext() =
+    MapContext(this.toMutableMap(), emptyList())

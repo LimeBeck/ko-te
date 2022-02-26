@@ -47,7 +47,7 @@ class EvaluatorTest {
             template.parseAst(),
             mapOf(
                 "variable" to RuntimeObject.StringWrapper("World"),
-                "function" to RuntimeObject.CallableWrapper { args ->
+                "function" to RuntimeObject.CallableWrapper { args, ctx ->
                     val name = args.first() as RuntimeObject.StringWrapper
                     RuntimeObject.StringWrapper("Hello, ${name.string}")
                 }
@@ -64,8 +64,8 @@ class EvaluatorTest {
             template.parseAst(),
             mapOf(
                 "variable" to RuntimeObject.StringWrapper("World"),
-                "function" to RuntimeObject.CallableWrapper { args1 ->
-                    RuntimeObject.CallableWrapper.from { args2 ->
+                "function" to RuntimeObject.CallableWrapper { args1, _ ->
+                    RuntimeObject.CallableWrapper.from { args2, _ ->
                         "${(args1.first() as RuntimeObject.StringWrapper).string}, ${(args2.first() as RuntimeObject.StringWrapper).string}"
                     }
                 }

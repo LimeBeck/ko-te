@@ -1,5 +1,5 @@
 import dev.limebeck.templateEngine.Renderer
-import dev.limebeck.templateEngine.runtime.MapContext
+import dev.limebeck.templateEngine.Resource
 import dev.limebeck.templateEngine.runtime.RuntimeException
 import dev.limebeck.templateEngine.runtime.RuntimeObject
 import utils.runTest
@@ -8,7 +8,7 @@ import kotlin.test.assertEquals
 
 class RenderTest {
     @Test
-    fun renderSimpleStringTemplate() = runTest {
+    fun valueAccess() = runTest {
         val renderer = Renderer()
 
         val simpleTextTemplate = """
@@ -32,18 +32,54 @@ class RenderTest {
     }
 
     @Test
-    fun renderTemplateWithFunction() = runTest {
-        val context = MapContext(mapOf(
-            "uppercase" to RuntimeObject.CallableWrapper.from {
-                val value = it.first()
-                if (value is RuntimeObject.StringWrapper) {
-                    value.string.uppercase()
-                } else {
-                    throw RuntimeException("<36c2048b> Value must be a string")
+    fun variableAssign() = runTest {
+        val renderer = Renderer()
+
+        val expectedOutput = """
+            Hello, World!
+        """.trimIndent().trim()
+
+        assertEquals(
+            expectedOutput,
+            renderer.render(
+                template = """
+                    {{ let name = "World" }}
+                    Hello, {{ name }}!
+                """.trimIndent(),
+                resources = null,
+                data = mapOf()
+            ).getValueOrNull()?.trim()
+        )
+
+        val simpleTextTemplate = """
+            {{ let name = "World" }}
+            Hello, {{ name }}!
+        """.trimIndent()
+
+        assertEquals(
+            expectedOutput,
+            renderer.render(
+                template = simpleTextTemplate,
+                resources = null,
+                data = mapOf()
+            ).getValueOrNull()?.trim()
+        )
+    }
+
+    @Test
+    fun functionCall() = runTest {
+        val renderer = Renderer {
+            mapOf(
+                "uppercase" to RuntimeObject.CallableWrapper.from { args, ctx ->
+                    val value = args.first()
+                    if (value is RuntimeObject.StringWrapper) {
+                        value.string.uppercase()
+                    } else {
+                        throw RuntimeException("<36c2048b> Value must be a string")
+                    }
                 }
-            }
-        ).toMutableMap())
-        val renderer = Renderer(context)
+            ).toMutableMap()
+        }
 
         val template = """
             Hello, {{ uppercase(name) }}!
@@ -61,8 +97,8 @@ class RenderTest {
     }
 
     @Test
-    fun renderTemplateWithCondition() = runTest {
-        val renderer = Renderer(MapContext.EMPTY)
+    fun simpleCondition() = runTest {
+        val renderer = Renderer()
 
         val template = """
             Hello, {{ if(variable) }}WORLD{{ else }}{{ username }}{{ endif }}!
@@ -96,8 +132,8 @@ class RenderTest {
     }
 
     @Test
-    fun renderTemplateWithNestedCondition() = runTest {
-        val renderer = Renderer(MapContext.EMPTY)
+    fun nestedCondition() = runTest {
+        val renderer = Renderer()
 
         val template = """
             Hello, {{ if(variable) }}{{ if(nestedCondition) }}WORLD{{ else }}МИР{{ endif }}{{ else }}{{ username }}{{ endif }}!
@@ -145,8 +181,8 @@ class RenderTest {
     }
 
     @Test
-    fun renderTemplateWithBinaryOperator() = runTest {
-        val renderer = Renderer(MapContext.EMPTY)
+    fun binaryOperator() = runTest {
+        val renderer = Renderer()
 
         val templateWithoutPrecedence = """{{ 1 + 2 * 3 }}""".trimIndent()
 
@@ -169,6 +205,28 @@ class RenderTest {
                         "three" to 3
                     )
                 )
+            ).getValueOrNull()
+        )
+    }
+
+    @Test
+    fun importTemplate() = runTest {
+        val renderer = Renderer()
+
+        val template = """{{ import "resource.kote" }}""".trimIndent()
+
+        assertEquals(
+            "Some template",
+            renderer.render(
+                template = template,
+                resources = listOf(
+                    object : Resource {
+                        override val identifier: String = "resource"
+                        override val content = "Some template".encodeToByteArray()
+                        override val contentType: String = "text/kote"
+                    }
+                ),
+                data = mapOf()
             ).getValueOrNull()
         )
     }

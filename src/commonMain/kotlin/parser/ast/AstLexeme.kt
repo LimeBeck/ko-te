@@ -5,9 +5,9 @@ import dev.limebeck.templateEngine.inputStream.InputStream
 sealed interface AstLexeme {
     val streamPosition: InputStream.Position
 
-    interface Primitive : AstLexeme
-    interface Expression : AstLexeme
-    interface WritableExpression : Expression
+    sealed interface Primitive : AstLexeme
+    sealed interface Expression : AstLexeme
+    sealed interface WritableExpression : Expression
 
     data class TemplateSource(
         override val streamPosition: InputStream.Position,
@@ -49,7 +49,7 @@ sealed interface AstLexeme {
     data class Assign(
         override val streamPosition: InputStream.Position,
         val left: WritableExpression,
-        val right: AstLexeme
+        val right: Expression
     ) : AstLexeme
 
     data class KeyAccess(
@@ -62,8 +62,7 @@ sealed interface AstLexeme {
         override val streamPosition: InputStream.Position,
         val array: Expression,
         val index: Int
-    ) :
-        WritableExpression
+    ) : WritableExpression
 
     data class InfixOperation(
         override val streamPosition: InputStream.Position,

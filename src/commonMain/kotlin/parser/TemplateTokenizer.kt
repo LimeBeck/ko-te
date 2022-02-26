@@ -61,8 +61,6 @@ class MustacheLikeTemplateTokenizer(
                 tokens.add(it)
             }
 
-//            (stream as? CharInputStream)?.debug()
-
             if (stream.hasNext()) {
                 stream.readLanguageParts().let {
                     tokens.addAll(it)

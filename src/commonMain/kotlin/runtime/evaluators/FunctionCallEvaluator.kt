@@ -5,7 +5,7 @@ import dev.limebeck.templateEngine.runtime.RuntimeContext
 import dev.limebeck.templateEngine.runtime.RuntimeException
 import dev.limebeck.templateEngine.runtime.RuntimeObject
 
-object FunctionEvaluator : Evaluator<AstLexeme.FunctionCall, RuntimeObject> {
+object FunctionCallEvaluator : Evaluator<AstLexeme.FunctionCall, RuntimeObject> {
     override fun eval(lexeme: AstLexeme.FunctionCall, context: RuntimeContext): EvalResult<RuntimeObject> {
         val possibleFunction = when (lexeme.identifier) {
             is AstLexeme.Variable -> context.get(lexeme.identifier.name)
@@ -16,6 +16,6 @@ object FunctionEvaluator : Evaluator<AstLexeme.FunctionCall, RuntimeObject> {
         val args = lexeme.args.map {
             CoreEvaluator.eval(it.value, context).result
         }
-        return EvalResult(possibleFunction.block(args))
+        return EvalResult(possibleFunction.block(args, context))
     }
 }

@@ -3,6 +3,7 @@ package dev.limebeck.templateEngine.parser.ast
 import dev.limebeck.templateEngine.inputStream.RewindableInputStream
 import dev.limebeck.templateEngine.parser.LanguageToken
 import dev.limebeck.templateEngine.parser.ast.valueParsers.ExpressionParser
+import dev.limebeck.templateEngine.parser.ast.valueParsers.ImportParser
 
 object CoreAstParser : AstLexemeParser<AstLexeme> {
     private val parsers = listOf(
@@ -23,6 +24,9 @@ object CoreAstParser : AstLexemeParser<AstLexeme> {
         return when {
             nextToken is LanguageToken.TemplateSource -> {
                 AstLexeme.TemplateSource(stream.currentPosition.copy(), nextToken.text)
+            }
+            ImportParser.canParse(stream) -> {
+                ImportParser.parse(stream)
             }
             ConditionalBlockParser.canParse(stream) -> {
                 ConditionalBlockParser.parse(stream)
