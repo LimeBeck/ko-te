@@ -60,16 +60,17 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${kotlinCoroutinesVersion}") {
-                    version {
-                        strictly(kotlinCoroutinesVersion)
-                    }
-                }
+
             }
         }
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${kotlinCoroutinesVersion}") {
+                    version {
+                        strictly(kotlinCoroutinesVersion)
+                    }
+                }
             }
         }
         val jvmMain by getting
@@ -87,11 +88,11 @@ kotlin {
                 implementation(kotlin("test-js"))
             }
         }
-        val nativeMain by getting {
+        val nativeMain by getting
+        val nativeTest by getting {
             dependencies {
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinCoroutinesVersion")
             }
         }
-        val nativeTest by getting
     }
 }
