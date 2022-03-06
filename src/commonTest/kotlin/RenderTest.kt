@@ -8,6 +8,34 @@ import kotlin.test.assertEquals
 
 class RenderTest {
     @Test
+    fun jsonLikeMapOutput() = runTest {
+        fun String.normalize() = replace("\\s".toRegex(), "")
+
+        val renderer = KoTeRenderer()
+        val template = "{{ data }}"
+        //language=JSON
+        val expectedOutput = """
+            {
+              "string": "value",
+               "number": 1.2,
+               "bool": true,
+               "array": ["string", 1.2, false]
+            }
+        """.trimIndent().normalize()
+
+        val data = mapOf(
+            "data" to mapOf(
+                "string" to "value",
+                "number" to 1.2,
+                "bool" to true,
+                "array" to listOf("string", 1.2, false)
+            )
+        )
+
+        assertEquals(expectedOutput, renderer.render(template, null, data).getValueOrNull()?.normalize())
+    }
+
+    @Test
     fun valueAccess() = runTest {
         val renderer = KoTeRenderer()
 

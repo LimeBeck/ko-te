@@ -78,7 +78,13 @@ fun render(value: RuntimeObject): String {
         is RuntimeObject.Null -> "NULL"
         is RuntimeObject.NumberWrapper -> value.number.toString()
         is RuntimeObject.BooleanWrapper -> value.value.toString()
-        is RuntimeObject.CollectionWrapper -> "[${value.collection.joinToString(",") { render(it) }}]"
+        is RuntimeObject.CollectionWrapper -> "[${value.collection.joinToString(",") {
+            if(it is RuntimeObject.StringWrapper){
+                "\"${it.string}\""
+            } else {
+                render(it)
+            }
+        }}]"
         is RuntimeObject.ObjectWrapper -> renderObject(value)
         is RuntimeObject.CallableWrapper -> "TODO"
         RuntimeObject.Nothing -> ""

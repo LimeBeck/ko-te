@@ -18,6 +18,6 @@ object ConditionalEvaluator : Evaluator<AstLexeme.Conditional, RuntimeObject> {
         else
             lexeme.another?.map { CoreEvaluator.eval(it, context) } ?: listOf()
 
-        return EvalResult(branch.lastOrNull()?.result ?: RuntimeObject.Null)
+        return EvalResult(branch.lastOrNull()?.result ?: RuntimeObject.Nothing)
     }
 }
