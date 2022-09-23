@@ -1,9 +1,7 @@
 package dev.limebeck.templateEngine.runtime.defaultLib
 
 import dev.limebeck.templateEngine.runtime.RuntimeObject
-import kotlin.native.concurrent.SharedImmutable
 
-@SharedImmutable
 val kote = "kote" to RuntimeObject.CallableWrapper.from { args, ctx ->
     ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n" +
     ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n" +

@@ -10,14 +10,26 @@ import dev.limebeck.templateEngine.runtime.*
 typealias JsonObject = Map<String, Any>
 
 class KoTeRenderer(
+    private val resourceLoader: ResourceLoader = StaticResourceLoader(),
     private val predefinedObjectsProvider: () -> Map<String, RuntimeObject> = { emptyMap() }
-) : Renderer {
+) {
     private val runtimeEngine = SimpleRuntimeEngine
     private val tokenizer = MustacheLikeTemplateTokenizer()
     private val languageParser = MustacheLikeLanguageParser()
     private val astParser = KoTeAstParser()
 
-    private suspend fun renderString(template: String, context: RuntimeContext): Result<String, ParserError> {
+    private val initialContext = MapContext(
+        predefinedRuntimeObjects = predefinedObjectsProvider(),
+        resourceLoader = resourceLoader,
+        renderer = object : Renderer {
+            override suspend fun render(templateName: String, context: RuntimeContext): Result<String, ParserError> {
+                val template = this@KoTeRenderer.resourceLoader.loadTemplate(templateName)
+                return this@KoTeRenderer.renderString(template, context)
+            }
+        }
+    )
+
+    internal suspend fun renderString(template: String, context: RuntimeContext): Result<String, ParserError> {
         val templateStream = template.toStream()
         val tokens = tokenizer.analyze(templateStream)
         val languageTokens = languageParser.parse(tokens.asSequence())
@@ -27,68 +39,18 @@ class KoTeRenderer(
         ) as Result<String, ParserError>
     }
 
-    override suspend fun render(templateName: String, context: RuntimeContext): Result<String, ParserError> {
-        return renderString(context.loadTemplate(templateName), context)
-    }
-
     suspend fun render(
         template: String,
-        resources: List<Resource>?,
         data: JsonObject
-    ): Result<String, ParserError> {
-        return renderString(
-            template,
-            MapContext(
-                predefinedRuntimeObjects = data.wrapAll().toMutableMap(),
-                resources = resources ?: emptyList(),
-                renderer = this
-            ) + predefinedObjectsProvider()
-        )
-    }
+    ): Result<String, ParserError> = renderString(
+        template = template,
+        context = initialContext + data.wrapAll()
+    )
 
-    private fun RuntimeContext.loadTemplate(
+    fun ResourceLoader.loadTemplate(
         templateName: String
     ): String {
-        val template = resources.find { it.identifier == templateName }
-            ?: throw RuntimeException("<16cf57ee>")
+        val template = loadResource(templateName)
         return template.content.decodeToString()
     }
 }
-
-interface Resource {
-    val identifier: String
-    val content: ByteArray
-    val contentType: String
-}
-
-fun List<RuntimeObject>.render() = joinToString("") { render(it) }
-
-fun renderObject(obj: RuntimeObject.ObjectWrapper): String {
-    return """{ ${
-        obj.obj.entries.joinToString(",") {
-            val value = it.value
-            """ "${it.key}": ${if (value is RuntimeObject.StringWrapper) "\"${value.string}\"" else render(value)}  """
-        }
-    } }"""
-}
-
-fun render(value: RuntimeObject): String {
-    return when (value) {
-        is RuntimeObject.StringWrapper -> value.string
-        is RuntimeObject.Null -> "NULL"
-        is RuntimeObject.NumberWrapper -> value.number.toString()
-        is RuntimeObject.BooleanWrapper -> value.value.toString()
-        is RuntimeObject.CollectionWrapper -> "[${value.collection.joinToString(",") {
-            if(it is RuntimeObject.StringWrapper){
-                "\"${it.string}\""
-            } else {
-                render(it)
-            }
-        }}]"
-        is RuntimeObject.ObjectWrapper -> renderObject(value)
-        is RuntimeObject.CallableWrapper -> "TODO"
-        RuntimeObject.Nothing -> ""
-    }
-}
-
-

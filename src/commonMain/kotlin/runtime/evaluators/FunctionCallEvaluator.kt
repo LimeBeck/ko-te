@@ -2,7 +2,7 @@ package dev.limebeck.templateEngine.runtime.evaluators
 
 import dev.limebeck.templateEngine.parser.ast.AstLexeme
 import dev.limebeck.templateEngine.runtime.RuntimeContext
-import dev.limebeck.templateEngine.runtime.RuntimeException
+import dev.limebeck.templateEngine.runtime.KoteRuntimeException
 import dev.limebeck.templateEngine.runtime.RuntimeObject
 
 object FunctionCallEvaluator : Evaluator<AstLexeme.FunctionCall, RuntimeObject> {
@@ -12,7 +12,7 @@ object FunctionCallEvaluator : Evaluator<AstLexeme.FunctionCall, RuntimeObject> 
             else -> CoreEvaluator.eval(lexeme.identifier, context).result
         }
         if (possibleFunction !is RuntimeObject.CallableWrapper)
-            throw RuntimeException("<95ee753e> $lexeme is not a callable")
+            throw KoteRuntimeException("<95ee753e> $lexeme is not a callable")
         val args = lexeme.args.map {
             CoreEvaluator.eval(it.value, context).result
         }

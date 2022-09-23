@@ -8,6 +8,8 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class EvaluatorTest {
+    private val emptyResourceLoader = StaticResourceLoader()
+
     private val renderer = object : Renderer {
         override suspend fun render(templateName: String, context: RuntimeContext): Result<String, ParserError> {
             TODO("<cc8f3059> Not yet implemented")
@@ -20,7 +22,7 @@ class EvaluatorTest {
         val runtimeEngine = SimpleRuntimeEngine
         val result = runtimeEngine.evaluateProgram(
                 root = simpleTemplate.parseAst(),
-                context = mapOf<String, RuntimeObject>().asContext(renderer)
+                context = mapOf<String, RuntimeObject>().asContext(renderer, emptyResourceLoader)
             )
         assertEquals(simpleTemplate, result.render())
     }
@@ -31,7 +33,7 @@ class EvaluatorTest {
         val runtimeEngine = SimpleRuntimeEngine
         val result = runtimeEngine.evaluateProgram(
             template.parseAst(),
-            mapOf("variable" to RuntimeObject.StringWrapper("value")).asContext(renderer)
+            mapOf("variable" to RuntimeObject.StringWrapper("value")).asContext(renderer, emptyResourceLoader)
         )
         assertEquals("Value: value", result.render())
     }
@@ -42,7 +44,7 @@ class EvaluatorTest {
         val runtimeEngine = SimpleRuntimeEngine
         val result = runtimeEngine.evaluateProgram(
             template.parseAst(),
-            context = mapOf<String, RuntimeObject>().asContext(renderer)
+            context = mapOf<String, RuntimeObject>().asContext(renderer, emptyResourceLoader)
         )
         assertEquals("value100", result.render())
     }
@@ -59,13 +61,13 @@ class EvaluatorTest {
                     val name = args.first() as RuntimeObject.StringWrapper
                     RuntimeObject.StringWrapper("Hello, ${name.string}")
                 }
-            ).asContext(renderer)
+            ).asContext(renderer, emptyResourceLoader)
         )
         assertEquals("Hello, World", result.render())
     }
 
     @Test
-    fun evaluateTemplateWithNestedFunction() = runTest {
+    fun evaluateTemplateWithHighOrderFunction() = runTest {
         val template = """{{ function("Hello")(variable) }}"""
         val runtimeEngine = SimpleRuntimeEngine
         val result = runtimeEngine.evaluateProgram(
@@ -77,7 +79,7 @@ class EvaluatorTest {
                         "${(args1.first() as RuntimeObject.StringWrapper).string}, ${(args2.first() as RuntimeObject.StringWrapper).string}"
                     }
                 }
-            ).asContext(renderer)
+            ).asContext(renderer, emptyResourceLoader)
         )
         assertEquals("Hello, World", result.render())
     }

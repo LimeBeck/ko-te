@@ -2,7 +2,7 @@ package dev.limebeck.templateEngine.runtime.evaluators
 
 import dev.limebeck.templateEngine.parser.ast.AstLexeme
 import dev.limebeck.templateEngine.runtime.RuntimeContext
-import dev.limebeck.templateEngine.runtime.RuntimeException
+import dev.limebeck.templateEngine.runtime.KoteRuntimeException
 import dev.limebeck.templateEngine.runtime.RuntimeObject
 
 object CoreEvaluator : Evaluator<AstLexeme, RuntimeObject> {
@@ -18,7 +18,7 @@ object CoreEvaluator : Evaluator<AstLexeme, RuntimeObject> {
             is AstLexeme.Conditional -> ConditionalEvaluator.eval(lexeme, context)
             is AstLexeme.InfixOperation -> OperationEvaluator.eval(lexeme, context)
             is AstLexeme.Import -> ImportEvaluator.eval(lexeme, context)
-            else -> throw RuntimeException("<2a2090f2> Can`t evaluate expression $lexeme")
+            else -> throw KoteRuntimeException("<2a2090f2> Can`t evaluate expression $lexeme")
         } as EvalResult<RuntimeObject>
     }
 }

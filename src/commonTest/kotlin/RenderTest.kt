@@ -1,7 +1,8 @@
 import dev.limebeck.templateEngine.KoTeRenderer
-import dev.limebeck.templateEngine.Resource
-import dev.limebeck.templateEngine.runtime.RuntimeException
+import dev.limebeck.templateEngine.runtime.KoteRuntimeException
+import dev.limebeck.templateEngine.runtime.Resource
 import dev.limebeck.templateEngine.runtime.RuntimeObject
+import dev.limebeck.templateEngine.runtime.StaticResourceLoader
 import utils.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -32,7 +33,7 @@ class RenderTest {
             )
         )
 
-        assertEquals(expectedOutput, renderer.render(template, null, data).getValueOrNull()?.normalize())
+        assertEquals(expectedOutput, renderer.render(template, data).getValueOrNull()?.normalize())
     }
 
     @Test
@@ -56,7 +57,7 @@ class RenderTest {
             Object value: "Simple string"
         """.trimIndent()
 
-        assertEquals(expectedOutput, renderer.render(simpleTextTemplate, null, data).getValueOrNull())
+        assertEquals(expectedOutput, renderer.render(simpleTextTemplate, data).getValueOrNull())
     }
 
     @Test
@@ -74,7 +75,6 @@ class RenderTest {
                     {{ let name = "World" }}
                     Hello, {{ name }}!
                 """.trimIndent(),
-                resources = null,
                 data = mapOf()
             ).getValueOrNull()?.trim()
         )
@@ -88,7 +88,6 @@ class RenderTest {
                         "Hello, " + name + "!"
                     }}
                 """.trimIndent(),
-                resources = null,
                 data = mapOf()
             ).getValueOrNull()?.trim()
         )
@@ -103,7 +102,7 @@ class RenderTest {
                     if (value is RuntimeObject.StringWrapper) {
                         value.string.uppercase()
                     } else {
-                        throw RuntimeException("<36c2048b> Value must be a string")
+                        throw KoteRuntimeException("<36c2048b> Value must be a string")
                     }
                 }
             ).toMutableMap()
@@ -121,7 +120,7 @@ class RenderTest {
             Hello, WORLD!
         """.trimIndent()
 
-        assertEquals(expectedOutput, renderer.render(template, null, data).getValueOrNull())
+        assertEquals(expectedOutput, renderer.render(template, data).getValueOrNull())
     }
 
     @Test
@@ -138,7 +137,7 @@ class RenderTest {
 
         assertEquals(
             expectedOutputTrue, renderer.render(
-                template, null, mapOf(
+                template, mapOf(
                     "variable" to true
                 )
             ).getValueOrNull()
@@ -151,7 +150,7 @@ class RenderTest {
 
         assertEquals(
             expectedOutputFalse, renderer.render(
-                template, null, mapOf(
+                template, mapOf(
                     "variable" to false,
                     "username" to username
                 )
@@ -173,7 +172,7 @@ class RenderTest {
 
         assertEquals(
             expectedOutputTrue, renderer.render(
-                template, null, mapOf(
+                template, mapOf(
                     "variable" to true,
                     "nestedCondition" to true
                 )
@@ -186,7 +185,7 @@ class RenderTest {
 
         assertEquals(
             expectedOutputNestedTrue, renderer.render(
-                template, null, mapOf(
+                template, mapOf(
                     "variable" to true,
                     "nestedCondition" to false
                 )
@@ -200,7 +199,7 @@ class RenderTest {
 
         assertEquals(
             expectedOutputFalse, renderer.render(
-                template, null, mapOf(
+                template, mapOf(
                     "variable" to false,
                     "username" to username
                 )
@@ -214,18 +213,17 @@ class RenderTest {
 
         val templateWithoutPrecedence = """{{ 1 + 2 * 3 }}""".trimIndent()
 
-        assertEquals("7", renderer.render(templateWithoutPrecedence, null, mapOf()).getValueOrNull())
+        assertEquals("7", renderer.render(templateWithoutPrecedence, mapOf()).getValueOrNull())
 
         val templateWithPrecedence = """{{ 2 * 3 + 1 }}""".trimIndent()
 
-        assertEquals("7", renderer.render(templateWithPrecedence, null, mapOf()).getValueOrNull())
+        assertEquals("7", renderer.render(templateWithPrecedence, mapOf()).getValueOrNull())
 
         val complexTemplate = """{{ obj.two * obj.three + obj.one }}""".trimIndent()
         assertEquals(
             "7",
             renderer.render(
                 template = complexTemplate,
-                resources = null,
                 data = mapOf(
                     "obj" to mapOf(
                         "one" to 1,
@@ -239,7 +237,15 @@ class RenderTest {
 
     @Test
     fun importTemplate() = runTest {
-        val renderer = KoTeRenderer()
+        val renderer = KoTeRenderer(resourceLoader = StaticResourceLoader(
+            resources = listOf(
+                object : Resource {
+                    override val identifier: String = "resource"
+                    override val content = "Some template".encodeToByteArray()
+                    override val contentType: String = "text/kote"
+                }
+            )
+        ))
 
         val template = """{{ import "resource" }}""".trimIndent()
 
@@ -247,13 +253,6 @@ class RenderTest {
             "Some template",
             renderer.render(
                 template = template,
-                resources = listOf(
-                    object : Resource {
-                        override val identifier: String = "resource"
-                        override val content = "Some template".encodeToByteArray()
-                        override val contentType: String = "text/kote"
-                    }
-                ),
                 data = mapOf()
             ).getValueOrNull()
         )

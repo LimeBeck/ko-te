@@ -4,7 +4,7 @@ import dev.limebeck.templateEngine.parser.ast.AstLexeme
 import dev.limebeck.templateEngine.parser.ast.Operation
 import dev.limebeck.templateEngine.parser.ast.valueParsers.IndexAccessParser.isInteger
 import dev.limebeck.templateEngine.runtime.RuntimeContext
-import dev.limebeck.templateEngine.runtime.RuntimeException
+import dev.limebeck.templateEngine.runtime.KoteRuntimeException
 import dev.limebeck.templateEngine.runtime.RuntimeObject
 
 operator fun Number.plus(other: Number): Number =
@@ -52,27 +52,27 @@ object OperationEvaluator : Evaluator<AstLexeme.InfixOperation, RuntimeObject> {
                         right.result is RuntimeObject.NumberWrapper -> RuntimeObject.NumberWrapper(left.result.number + right.result.number)
                 left.result is RuntimeObject.StringWrapper &&
                         right.result is RuntimeObject.StringWrapper -> RuntimeObject.StringWrapper(left.result.string + right.result.string)
-                else -> throw RuntimeException("<e3702fa1> $lexeme can`t be evaluated")
+                else -> throw KoteRuntimeException("<e3702fa1> $lexeme can`t be evaluated")
             }
             Operation.MULTIPLY -> when {
                 left.result is RuntimeObject.NumberWrapper &&
                         right.result is RuntimeObject.NumberWrapper -> RuntimeObject.NumberWrapper(left.result.number * right.result.number)
-                else -> throw RuntimeException("<015cca01> $lexeme can`t be evaluated")
+                else -> throw KoteRuntimeException("<015cca01> $lexeme can`t be evaluated")
             }
             Operation.MINUS -> when {
                 left.result is RuntimeObject.NumberWrapper &&
                         right.result is RuntimeObject.NumberWrapper -> RuntimeObject.NumberWrapper(left.result.number - right.result.number)
-                else -> throw RuntimeException("<a956ce5b> $lexeme can`t be evaluated")
+                else -> throw KoteRuntimeException("<a956ce5b> $lexeme can`t be evaluated")
             }
             Operation.DIVIDE ->  when {
                 left.result is RuntimeObject.NumberWrapper &&
                         right.result is RuntimeObject.NumberWrapper -> RuntimeObject.NumberWrapper(left.result.number / right.result.number)
-                else -> throw RuntimeException("<6da4d6d4> $lexeme can`t be evaluated")
+                else -> throw KoteRuntimeException("<6da4d6d4> $lexeme can`t be evaluated")
             }
             Operation.PERCENT -> when {
                 left.result is RuntimeObject.NumberWrapper &&
                         right.result is RuntimeObject.NumberWrapper -> RuntimeObject.NumberWrapper(left.result.number % right.result.number)
-                else -> throw RuntimeException("<6da4d6d4> $lexeme can`t be evaluated")
+                else -> throw KoteRuntimeException("<6da4d6d4> $lexeme can`t be evaluated")
             }
             Operation.EQUALS -> TODO()
         }
