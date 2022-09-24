@@ -25,7 +25,7 @@ publishing {
 }
 
 group = "dev.limebeck"
-version = "0.2.0"
+version = "0.2.1"
 
 repositories {
     mavenCentral()

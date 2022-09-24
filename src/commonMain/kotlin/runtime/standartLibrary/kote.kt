@@ -1,8 +1,8 @@
-package dev.limebeck.templateEngine.runtime.defaultLib
+package dev.limebeck.templateEngine.runtime.standartLibrary
 
-import dev.limebeck.templateEngine.runtime.RuntimeObject
+import dev.limebeck.templateEngine.utils.koteFunction
 
-val kote = "kote" to RuntimeObject.CallableWrapper.from { args, ctx ->
+val kote = koteFunction("kote") { args, ctx ->
     ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n" +
     ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n" +
     ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n" +

@@ -11,7 +11,7 @@ typealias JsonObject = Map<String, Any>
 
 class KoTeRenderer(
     private val resourceLoader: ResourceLoader = StaticResourceLoader(),
-    private val predefinedObjectsProvider: () -> Map<String, RuntimeObject> = { emptyMap() }
+    predefinedObjectsProvider: () -> Map<String, RuntimeObject> = { emptyMap() }
 ) {
     private val runtimeEngine = SimpleRuntimeEngine
     private val tokenizer = MustacheLikeTemplateTokenizer()
@@ -47,7 +47,15 @@ class KoTeRenderer(
         context = initialContext + data.wrapAll()
     )
 
-    fun ResourceLoader.loadTemplate(
+    suspend fun renderFromResource(
+        templateResourceIdentifier: String,
+        data: JsonObject
+    ): Result<String, ParserError> = renderString(
+        template = resourceLoader.loadTemplate(templateResourceIdentifier),
+        context = initialContext + data.wrapAll()
+    )
+
+    internal fun ResourceLoader.loadTemplate(
         templateName: String
     ): String {
         val template = loadResource(templateName)
