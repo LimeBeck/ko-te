@@ -1,4 +1,5 @@
 import dev.limebeck.templateEngine.KoTeRenderer
+import dev.limebeck.templateEngine.parser.LexerError
 import dev.limebeck.templateEngine.runtime.KoteRuntimeException
 import dev.limebeck.templateEngine.runtime.Resource
 import dev.limebeck.templateEngine.runtime.RuntimeObject
@@ -6,6 +7,7 @@ import dev.limebeck.templateEngine.runtime.StaticResourceLoader
 import utils.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 class RenderTest {
     @Test
@@ -210,8 +212,22 @@ class RenderTest {
     @Test
     fun groupExpressionParser() = runTest {
         val renderer = KoTeRenderer()
-        val templateWithChangedPrecedence = """{{ (1 + 2) * 3 }}""".trimIndent()
+
+        val templateWithChangedPrecedence = """{{ ((1 + 2) * 3) * 1 }}""".trimIndent()
         assertEquals("9", renderer.render(templateWithChangedPrecedence, mapOf()).getValueOrNull())
+
+        val errorCases = listOf(
+            "{{ (1 + ) }}",
+            "{{ ( }}",
+            "{{ ) }}",
+            "{{ () }}",
+        )
+
+        errorCases.forEach {
+            assertFailsWith<LexerError> {
+                renderer.render(it, mapOf())
+            }
+        }
     }
 
     @Test

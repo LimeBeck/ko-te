@@ -1,6 +1,6 @@
-import dev.limebeck.templateEngine.inputStream.InputStream
 import dev.limebeck.templateEngine.inputStream.SimplePosition
 import dev.limebeck.templateEngine.parser.ast.AstLexeme
+import dev.limebeck.templateEngine.parser.ast.Operation
 import utils.parseAst
 import utils.runTest
 import kotlin.test.Test
@@ -41,6 +41,54 @@ class AstParserTest {
         val expected = listOf(
             AstLexeme.Number(SimplePosition.MOCK, 123),
             AstLexeme.Number(SimplePosition.MOCK, 123.456F)
+        )
+        assertContentEquals(expected, list)
+    }
+
+    @Test
+    fun parseOperationsValueFromTemplate() = runTest {
+        val astLexemes = """
+            {{ (123 + 123.456) * 2 }}
+        """.trimIndent().parseAst()
+        val list = astLexemes.body.toList()
+
+        assertEquals(1, list.size)
+        val expected = listOf(
+            AstLexeme.InfixOperation(
+                streamPosition = SimplePosition.MOCK,
+                left = AstLexeme.InfixOperation(
+                    streamPosition = SimplePosition.MOCK,
+                    left = AstLexeme.Number(SimplePosition.MOCK, 123),
+                    right = AstLexeme.Number(SimplePosition.MOCK, 123.456F),
+                    operation = Operation.PLUS
+                ),
+                right = AstLexeme.Number(SimplePosition.MOCK, 2),
+                operation = Operation.MULTIPLY
+            )
+        )
+        assertContentEquals(expected, list)
+    }
+
+    @Test
+    fun parseNestedOperationsValueFromTemplate() = runTest {
+        val astLexemes = """
+            {{ ((123 + 123.456) * 2) }}
+        """.trimIndent().parseAst()
+        val list = astLexemes.body.toList()
+
+        assertEquals(1, list.size)
+        val expected = listOf(
+            AstLexeme.InfixOperation(
+                streamPosition = SimplePosition.MOCK,
+                left = AstLexeme.InfixOperation(
+                    streamPosition = SimplePosition.MOCK,
+                    left = AstLexeme.Number(SimplePosition.MOCK, 123),
+                    right = AstLexeme.Number(SimplePosition.MOCK, 123.456F),
+                    operation = Operation.PLUS
+                ),
+                right = AstLexeme.Number(SimplePosition.MOCK, 2),
+                operation = Operation.MULTIPLY
+            )
         )
         assertContentEquals(expected, list)
     }

@@ -31,11 +31,20 @@ object GroupExpressionParser : AstLexemeParser<AstLexeme.Expression> {
         if (stream.hasClosedBracket) {
             stream.throwErrorOnValue("unexpected closed bracket ')'")
         }
-        val newStream = stream
-            .readUntil { stream.hasNext() && !stream.hasClosedBracket }
-            .toStream()
 
-        return ExpressionParser.parse(newStream)
+        val value = ExpressionParser.parse(stream)
+
+        if (!stream.hasNext()) {
+            stream.throwErrorOnValue("identifier or closed bracket ')'")
+        }
+
+        stream.next()
+
+        if (!stream.hasClosedBracket) {
+            stream.throwErrorOnValue("closed bracket ')'")
+        }
+
+        return value
     }
 
     private val InputStream<LanguageToken>.hasClosedBracket: Boolean
