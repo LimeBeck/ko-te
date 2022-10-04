@@ -4,6 +4,7 @@ import dev.limebeck.templateEngine.runtime.KoteRuntimeException
 import dev.limebeck.templateEngine.runtime.Resource
 import dev.limebeck.templateEngine.runtime.RuntimeObject
 import dev.limebeck.templateEngine.runtime.StaticResourceLoader
+import dev.limebeck.templateEngine.runtime.standartLibrary.std
 import utils.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -99,14 +100,7 @@ class RenderTest {
     fun functionCall() = runTest {
         val renderer = KoTeRenderer {
             mapOf(
-                "uppercase" to RuntimeObject.CallableWrapper.from { args, ctx ->
-                    val value = args.first()
-                    if (value is RuntimeObject.StringWrapper) {
-                        value.string.uppercase()
-                    } else {
-                        throw KoteRuntimeException("<36c2048b> Value must be a string")
-                    }
-                }
+                *std
             ).toMutableMap()
         }
 

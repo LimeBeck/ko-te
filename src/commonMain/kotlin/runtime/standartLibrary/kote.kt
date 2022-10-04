@@ -1,8 +1,8 @@
 package dev.limebeck.templateEngine.runtime.standartLibrary
 
-import dev.limebeck.templateEngine.utils.koteFunction
+import dev.limebeck.templateEngine.utils.koteFun
 
-val kote = koteFunction("kote") { args, ctx ->
+val kote by koteFun { args, ctx ->
     ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n" +
     ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n" +
     ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n" +
