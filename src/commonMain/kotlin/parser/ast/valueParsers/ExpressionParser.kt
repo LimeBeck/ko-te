@@ -21,6 +21,7 @@ object ExpressionParser : AstLexemeParser<AstLexeme.Expression> {
         KeyAccessParser as AstLexemeParser<AstLexeme.Expression>,
         IndexAccessParser as AstLexemeParser<AstLexeme.Expression>,
         IdentifierParser as AstLexemeParser<AstLexeme.Expression>,
+        GroupExpressionParser as AstLexemeParser<AstLexeme.Expression>
     )
 
     private val partialParsers = expressionParsers.filterIsInstance<AstLexemeValueParser>() + listOf(
@@ -38,8 +39,11 @@ object ExpressionParser : AstLexemeParser<AstLexeme.Expression> {
         while (stream.hasNext()) {
             val rewindPoint = stream.currentPosition.absolutePosition
             stream.next()
-            value = partialParsers.find { it.canParseNext(stream) }?.parseNext(stream, value)
-                .also { it ?: stream.seek(rewindPoint) } ?: break
+            value = partialParsers
+                .find { it.canParseNext(stream) }
+                ?.parseNext(stream, value)
+                .also { it ?: stream.seek(rewindPoint) }
+                ?: break
         }
 
         return value

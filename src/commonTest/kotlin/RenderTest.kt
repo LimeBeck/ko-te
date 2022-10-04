@@ -208,6 +208,13 @@ class RenderTest {
     }
 
     @Test
+    fun groupExpressionParser() = runTest {
+        val renderer = KoTeRenderer()
+        val templateWithChangedPrecedence = """{{ (1 + 2) * 3 }}""".trimIndent()
+        assertEquals("9", renderer.render(templateWithChangedPrecedence, mapOf()).getValueOrNull())
+    }
+
+    @Test
     fun binaryOperator() = runTest {
         val renderer = KoTeRenderer()
 
@@ -215,10 +222,13 @@ class RenderTest {
 
         assertEquals("7", renderer.render(templateWithoutPrecedence, mapOf()).getValueOrNull())
 
+        val templateWithChangedPrecedence = """{{ (1 + 2) * 3 }}""".trimIndent()
+
+        assertEquals("9", renderer.render(templateWithChangedPrecedence, mapOf()).getValueOrNull())
+
         val templateWithPrecedence = """{{ 2 * 3 + 1 }}""".trimIndent()
 
         assertEquals("7", renderer.render(templateWithPrecedence, mapOf()).getValueOrNull())
-
         val complexTemplate = """{{ obj.two * obj.three + obj.one }}""".trimIndent()
         assertEquals(
             "7",

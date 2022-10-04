@@ -34,8 +34,8 @@ object OperationParser : AstLexemeValueParser {
             ?: stream.throwErrorOnValue("operation")
 
         stream.next()
-        val right = ExpressionParser.parse(stream)
 
+        val right = ExpressionParser.parse(stream)
         if (right is AstLexeme.InfixOperation && right.operation.presence < operation.presence) {
             stream.seek(right.left.streamPosition.absolutePosition)
             return AstLexeme.InfixOperation(
