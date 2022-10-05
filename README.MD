@@ -1,4 +1,7 @@
-# Work in progress!
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/limebeck/ko-te/CI)
+![GitHub last commit](https://img.shields.io/github/last-commit/limebeck/ko-te)
+![GitHub](https://img.shields.io/github/license/limebeck/ko-te)
+
 # Ko-te (Kotlin Template Engine)
 
 Pure-kotlin template engine for all platforms
