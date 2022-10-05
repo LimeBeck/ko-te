@@ -2,6 +2,7 @@ plugins {
     kotlin("multiplatform")
     id("maven-publish")
     id("com.github.ben-manes.versions").version("0.42.0")
+    signing
 }
 
 val kotlinCoroutinesVersion: String by project
@@ -22,6 +23,31 @@ publishing {
             }
         }
     }
+
+    publications {
+        withType<MavenPublication>{
+            pom {
+                description.set("Ko(tlin)-Te(mplate engine). Kotlin Multiplatform Template Engine")
+                url.set("https://github.com/LimeBeck/ko-te")
+                developers {
+                    developer {
+                        id.set("LimeBeck")
+                        name.set("Anatoly Nechay-Gumen")
+                        email.set("mail@limebeck.dev")
+                    }
+                }
+                scm {
+                    connection.set("scm:git:git://github.com/LimeBeck/ko-te.git")
+                    developerConnection.set("scm:git:ssh://github.com/LimeBeck/ko-te.git")
+                    url.set("https://github.com/LimeBeck/ko-te")
+                }
+            }
+        }
+    }
+}
+
+signing {
+    sign(publishing.publications)
 }
 
 group = "dev.limebeck"

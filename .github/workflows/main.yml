@@ -69,6 +69,12 @@ jobs:
           REPO_USERNAME: ${{ github.actor }}
           REPO_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Publish libs as artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: Package
+          path: build/libs
+
   publish-test-results:
     name: "Publish Unit Tests Results"
     needs: build
