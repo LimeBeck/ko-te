@@ -118,12 +118,9 @@ jobs:
 #        env:
 #          GPG_KEY_ARMOR: ${{ secrets.GPG_KEY_ARMOR }}
         run: |
-          echo '${{GPG_SIGNING_KEY}}' | base64 -d > publish_key.gpg
-          gpg --quiet --batch --yes --decrypt --passphrase="${{SECRET_PASSPHRASE}}" \
+          echo '${{secrets.GPG_SIGNING_KEY}}' | base64 -d > publish_key.gpg
+          gpg --quiet --batch --yes --decrypt --passphrase="${{secrets.SECRET_PASSPHRASE}}" \
             --output $GITHUB_WORKSPACE/release.gpg publish_key.gpg
-        env:
-          GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
-          SECRET_PASSPHRASE: ${{ secrets.SECRET_PASSPHRASE }}
 
       - name: Publish to GitHub Packages
         run: |
