@@ -65,7 +65,7 @@ jobs:
 
       - name: Import GPG Key
         run: |
-          echo -n "$GPG_SIGNING_KEY" | base64 --decode | gpg --import
+          echo -n "$GPG_SIGNING_KEY" | base64 --decode | gpg --import --no-tty --batch --yes
           gpg --keyring secring.gpg --export-secret-keys > ./secring.gpg
         env:
           GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
