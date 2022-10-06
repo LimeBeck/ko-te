@@ -40,7 +40,30 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle
-      
+
+      - name: Build with Gradle
+        run: ./gradlew build
+
+      - name: Publish libs as artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: Package
+          path: build/libs
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ./.gradle/
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.konan/
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle
+
       - name: Test JVM with Gradle
         if: always()
         run: ./gradlew :jvmTest -i
@@ -53,9 +76,6 @@ jobs:
         if: always()
         run: ./gradlew :nativeTest -i
 
-      - name: Build with Gradle
-        run: ./gradlew build
-
       - name: Upload Unit Test Results
         if: always()
         uses: actions/upload-artifact@v2
@@ -63,28 +83,36 @@ jobs:
           name: Unit Test Results
           path: /home/runner/work/ko-te/ko-te/build/test-results/**/*.xml
 
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ./.gradle/
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.konan/
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle
+
       - name: Import GPG Key
         run: |
-          echo -n "$GPG_SIGNING_KEY" | base64 --decode | gpg --import --no-tty --batch --yes
-          gpg --keyring secring.gpg --export-secret-keys > ./secring.gpg
+          echo $GPG_KEY_ARMOR > ./release.asc
+          gpg --quiet --output $GITHUB_WORKSPACE/release.gpg --dearmor ./release.asc
         env:
           GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
 
       - name: Publish to GitHub Packages
         run: |
           ./gradlew publish \
-            -Psigning.secretKeyRingFile=./secring.gpg \
+            -Psigning.secretKeyRingFile=$GITHUB_WORKSPACE/release.gpg \
             -Psigning.password=${{ secrets.GPG_PASSWORD }} \
             -Psigning.keyId=${{ secrets.GPG_KEY_ID }}
         env:
           REPO_USERNAME: ${{ github.actor }}
           REPO_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Publish libs as artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: Package
-          path: build/libs
 
   publish-test-results:
     name: "Publish Unit Tests Results"
