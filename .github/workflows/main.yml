@@ -103,6 +103,7 @@ jobs:
           gpg --quiet --output $GITHUB_WORKSPACE/release.gpg --dearmor ./release.asc
         env:
           GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
+          $GPG_KEY_ARMOR: ${{ secrets.$GPG_KEY_ARMOR }}
 
       - name: Publish to GitHub Packages
         run: |
@@ -113,6 +114,8 @@ jobs:
         env:
           REPO_USERNAME: ${{ github.actor }}
           REPO_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          GPG_PASSWORD: ${{ secrets.GPG_PASSWORD }}
+          GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
 
   publish-test-results:
     name: "Publish Unit Tests Results"
