@@ -7,51 +7,6 @@ plugins {
 
 val kotlinCoroutinesVersion: String by project
 
-publishing {
-    repositories {
-        maven {
-            name = "MainRepo"
-            url = uri(
-                project.findProperty("repo.uri") as String?
-                    ?: System.getenv("REPO_URI")
-            )
-            credentials {
-                username = project.findProperty("repo.username") as String?
-                    ?: System.getenv("REPO_USERNAME")
-                password = project.findProperty("repo.password") as String?
-                    ?: System.getenv("REPO_PASSWORD")
-            }
-        }
-    }
-
-    publications {
-        withType<MavenPublication>{
-            val publicationName = name
-            pom {
-                name.set("Ko-Te ($publicationName)")
-                description.set("Ko(tlin)-Te(mplate engine). Kotlin Multiplatform Template Engine")
-                url.set("https://github.com/LimeBeck/ko-te")
-                developers {
-                    developer {
-                        id.set("LimeBeck")
-                        name.set("Anatoly Nechay-Gumen")
-                        email.set("mail@limebeck.dev")
-                    }
-                }
-                scm {
-                    connection.set("scm:git:git://github.com/LimeBeck/ko-te.git")
-                    developerConnection.set("scm:git:ssh://github.com/LimeBeck/ko-te.git")
-                    url.set("https://github.com/LimeBeck/ko-te")
-                }
-            }
-        }
-    }
-}
-
-signing {
-    sign(publishing.publications)
-}
-
 group = "dev.limebeck"
 version = "0.2.4"
 
@@ -60,7 +15,23 @@ repositories {
 }
 
 kotlin {
+    metadata {
+        mavenPublication {
+            artifactId = "ko-te"
+            pom {
+                name.set("Ko-Te template library metadata")
+                description.set("Kotlin metadata module for Ko-Te template library")
+            }
+        }
+    }
     jvm {
+        mavenPublication {
+            artifactId = "ko-te-jvm"
+            pom {
+                name.set("Ko-Te template library JVM")
+                description.set("Kotlin JVM module for Ko-Te template library")
+            }
+        }
         compilations.all {
             kotlinOptions.jvmTarget = "1.8"
         }
@@ -70,7 +41,13 @@ kotlin {
     }
 
     js(IR) {
-//        useCommonJs()
+        mavenPublication {
+            artifactId = "ko-te-js"
+            pom {
+                name.set("Ko-Te template library JS")
+                description.set("Kotlin JS module for Ko-Te template library")
+            }
+        }
         binaries.executable()
         nodejs {
         }
@@ -79,9 +56,33 @@ kotlin {
     val hostOs = System.getProperty("os.name")
     val isMingwX64 = hostOs.startsWith("Windows")
     val nativeTarget = when {
-        hostOs == "Mac OS X" -> macosX64("native")
-        hostOs == "Linux" -> linuxX64("native")
-        isMingwX64 -> mingwX64("native")
+        hostOs == "Mac OS X" -> macosX64("native") {
+            mavenPublication {
+                artifactId = "ko-te-native-macos"
+                pom {
+                    name.set("Ko-Te template library native-macos")
+                    description.set("Kotlin native-macos module for Ko-Te template library")
+                }
+            }
+        }
+        hostOs == "Linux" -> linuxX64("native") {
+            mavenPublication {
+                artifactId = "ko-te-native-linux"
+                pom {
+                    name.set("Ko-Te template library native-linux")
+                    description.set("Kotlin native-linux module for Ko-Te template library")
+                }
+            }
+        }
+        isMingwX64 -> mingwX64("native") {
+            mavenPublication {
+                artifactId = "ko-te-native-win"
+                pom {
+                    name.set("Ko-Te template library native-win")
+                    description.set("Kotlin native-win module for Ko-Te template library")
+                }
+            }
+        }
         else -> throw GradleException("Host OS is not supported in Kotlin/Native.")
     }
 
@@ -123,4 +124,67 @@ kotlin {
             }
         }
     }
+}
+
+val stubJavaDocJar by tasks.registering(Jar::class) {
+    archiveClassifier.value("javadoc")
+}
+
+publishing {
+    kotlin.targets.forEach { target ->
+        val targetPublication: Publication? = publications.findByName(target.name)
+        if (targetPublication is MavenPublication) {
+            targetPublication.artifact(stubJavaDocJar.get())
+        }
+    }
+
+    repositories {
+        maven {
+            name = "MainRepo"
+            url = uri(
+                project.findProperty("repo.uri") as String?
+                    ?: System.getenv("REPO_URI")
+            )
+            credentials {
+                username = project.findProperty("repo.username") as String?
+                    ?: System.getenv("REPO_USERNAME")
+                password = project.findProperty("repo.password") as String?
+                    ?: System.getenv("REPO_PASSWORD")
+            }
+        }
+    }
+
+    publications {
+        withType<MavenPublication>{
+            val publicationName = name
+            pom {
+//                name.set("Ko-Te ($publicationName)")
+//                description.set("Ko(tlin)-Te(mplate engine). Kotlin Multiplatform Template Engine")
+                url.set("https://github.com/LimeBeck/ko-te")
+                developers {
+                    developer {
+                        id.set("LimeBeck")
+                        name.set("Anatoly Nechay-Gumen")
+                        email.set("mail@limebeck.dev")
+                    }
+                }
+                licenses {
+                    license {
+                        name.set("MIT license")
+                        url.set("https://github.com/LimeBeck/ko-te/blob/master/LICENCE")
+                        distribution.set("repo")
+                    }
+                }
+                scm {
+                    connection.set("scm:git:git://github.com/LimeBeck/ko-te.git")
+                    developerConnection.set("scm:git:ssh://github.com/LimeBeck/ko-te.git")
+                    url.set("https://github.com/LimeBeck/ko-te")
+                }
+            }
+        }
+    }
+}
+
+signing {
+    sign(publishing.publications)
 }
