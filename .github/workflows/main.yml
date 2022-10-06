@@ -63,8 +63,19 @@ jobs:
           name: Unit Test Results
           path: /home/runner/work/ko-te/ko-te/build/test-results/**/*.xml
 
+      - name: Import GPG Key
+        run: |
+          echo -n "$GPG_SIGNING_KEY" | base64 --decode | gpg --import
+          gpg --keyring secring.gpg --export-secret-keys > ./secring.gpg
+        env:
+          GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
+
       - name: Publish to GitHub Packages
-        run: ./gradlew publish
+        run: |
+          ./gradlew publish \
+            -Psigning.secretKeyRingFile=./secring.gpg \
+            -Psigning.password=${{ secrets.GPG_PASSWORD }} \
+            -Psigning.keyId=${{ secrets.GPG_KEY_ID }}
         env:
           REPO_USERNAME: ${{ github.actor }}
           REPO_PASSWORD: ${{ secrets.GITHUB_TOKEN }}

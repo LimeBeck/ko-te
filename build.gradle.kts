@@ -26,7 +26,9 @@ publishing {
 
     publications {
         withType<MavenPublication>{
+            val publicationName = name
             pom {
+                name.set("Ko-Te ($publicationName)")
                 description.set("Ko(tlin)-Te(mplate engine). Kotlin Multiplatform Template Engine")
                 url.set("https://github.com/LimeBeck/ko-te")
                 developers {
