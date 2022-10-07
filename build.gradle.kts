@@ -65,6 +65,7 @@ kotlin {
                 }
             }
         }
+
         hostOs == "Linux" -> linuxX64("native") {
             mavenPublication {
                 artifactId = "ko-te-native-linux"
@@ -74,6 +75,7 @@ kotlin {
                 }
             }
         }
+
         isMingwX64 -> mingwX64("native") {
             mavenPublication {
                 artifactId = "ko-te-native-win"
@@ -83,6 +85,7 @@ kotlin {
                 }
             }
         }
+
         else -> throw GradleException("Host OS is not supported in Kotlin/Native.")
     }
 
@@ -155,11 +158,14 @@ publishing {
     }
 
     publications {
-        withType<MavenPublication>{
-            val publicationName = name
+        withType<MavenPublication> {
+            val publicationName = this.name
             pom {
-//                name.set("Ko-Te ($publicationName)")
-//                description.set("Ko(tlin)-Te(mplate engine). Kotlin Multiplatform Template Engine")
+                if (publicationName == "kotlinMultiplatform") {
+                    name.set("Ko-Te")
+                    description.set("Ko-Te template library")
+                }
+                groupId = "dev.limebeck"
                 url.set("https://github.com/LimeBeck/ko-te")
                 developers {
                     developer {
