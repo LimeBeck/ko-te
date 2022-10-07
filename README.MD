@@ -1,6 +1,7 @@
 ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/limebeck/ko-te/CI)
 ![GitHub last commit](https://img.shields.io/github/last-commit/limebeck/ko-te)
 ![GitHub](https://img.shields.io/github/license/limebeck/ko-te)
+[![Maven Central](https://img.shields.io/maven-central/v/dev.limebeck/ko-te.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22dev.limebeck%22%20AND%20a:%22ko-te%22)
 
 # Ko-te (Kotlin Template Engine)
 

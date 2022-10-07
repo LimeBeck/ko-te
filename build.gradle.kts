@@ -145,14 +145,14 @@ publishing {
         maven {
             name = "MainRepo"
             url = uri(
-                project.findProperty("repo.uri") as String?
-                    ?: System.getenv("REPO_URI")
+                System.getenv("REPO_URI")
+                    ?: project.findProperty("repo.uri") as String
             )
             credentials {
-                username = project.findProperty("repo.username") as String?
-                    ?: System.getenv("REPO_USERNAME")
-                password = project.findProperty("repo.password") as String?
-                    ?: System.getenv("REPO_PASSWORD")
+                username = System.getenv("REPO_USERNAME")
+                    ?: project.findProperty("repo.username") as String
+                password = System.getenv("REPO_PASSWORD")
+                    ?: project.findProperty("repo.password") as String
             }
         }
     }
