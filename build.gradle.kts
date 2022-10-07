@@ -150,9 +150,9 @@ publishing {
             )
             credentials {
                 username = System.getenv("REPO_USERNAME")
-                    ?: project.findProperty("repo.username") as String
+                    ?: project.findProperty("repo.username") as String?
                 password = System.getenv("REPO_PASSWORD")
-                    ?: project.findProperty("repo.password") as String
+                    ?: project.findProperty("repo.password") as String?
             }
         }
     }
