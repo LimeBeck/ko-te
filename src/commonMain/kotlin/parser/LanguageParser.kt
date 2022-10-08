@@ -41,10 +41,15 @@ class MustacheLikeLanguageParser : LanguageParser {
                         stream.next()
                     }
                     ALLOWED_STRING_DEFINITIONS.any { stream.isNextSequenceEquals(it.toList()) } -> {
-                        val stringDef = stream.readUntil { it.isStringDef() }.first()
-                        val string = stream.readUntil { it != stringDef }.joinToString("")
-                        stream.skipNext(listOf(stringDef))
-                        yield(LanguageToken.StringValue(string, startPosition = token.startPosition))
+                        val stringDefs = stream.readUntil { it.isStringDef() }
+                        if(stringDefs.size % 2 == 0){
+                            yield(LanguageToken.StringValue("", startPosition = token.startPosition))
+                        } else {
+                            val stringDef = stringDefs.first()
+                            val string = stream.readUntil { it != stringDef }.joinToString("")
+                            stream.skipNext(listOf(stringDef))
+                            yield(LanguageToken.StringValue(string, startPosition = token.startPosition))
+                        }
                     }
                     nextChar.isDigit() -> {
                         var hasPointInside = false

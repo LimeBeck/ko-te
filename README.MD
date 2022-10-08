@@ -57,4 +57,5 @@ Conditional value: {{
     endif 
 }}
 Conditional block: {{ if(value) }} Value is true {{ else }} Value is false {{ endif }}
+Import: {{ import import "resourceName" }}
 ```

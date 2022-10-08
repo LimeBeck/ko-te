@@ -74,7 +74,15 @@ object OperationEvaluator : Evaluator<AstLexeme.InfixOperation, RuntimeObject> {
                         right.result is RuntimeObject.NumberWrapper -> RuntimeObject.NumberWrapper(left.result.number % right.result.number)
                 else -> throw KoteRuntimeException("<6da4d6d4> $lexeme can`t be evaluated")
             }
-            Operation.EQUALS -> TODO()
+            Operation.EQUALS -> when {
+                left.result is RuntimeObject.NumberWrapper
+                        && right.result is RuntimeObject.NumberWrapper -> RuntimeObject.BooleanWrapper(left.result.number == right.result.number)
+                left.result is RuntimeObject.StringWrapper
+                        && right.result is RuntimeObject.StringWrapper -> RuntimeObject.BooleanWrapper(left.result.string == right.result.string)
+                left.result is RuntimeObject.BooleanWrapper
+                        && right.result is RuntimeObject.BooleanWrapper -> RuntimeObject.BooleanWrapper(left.result.value == right.result.value)
+                else -> RuntimeObject.BooleanWrapper(false)
+            }
         }
         return EvalResult(result)
 //        val possibleFunction = when (lexeme.operation) {

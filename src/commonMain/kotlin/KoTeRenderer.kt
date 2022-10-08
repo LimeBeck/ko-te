@@ -62,3 +62,5 @@ class KoTeRenderer(
         return template.content.decodeToString()
     }
 }
+
+suspend fun KoTeRenderer.render(template: String) = render(template, mapOf())

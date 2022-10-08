@@ -59,7 +59,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: 'temurin'
-          java-version: '11'
+          java-version: '17'
       - uses: actions/cache@v2
         with:
           path: |
@@ -99,7 +99,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: 'temurin'
-          java-version: '11'
+          java-version: '17'
       - uses: actions/cache@v2
         with:
           path: |
@@ -138,7 +138,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: 'temurin'
-          java-version: '11'
+          java-version: '17'
       - uses: actions/cache@v2
         with:
           path: |

@@ -1,5 +1,6 @@
 import dev.limebeck.templateEngine.KoTeRenderer
 import dev.limebeck.templateEngine.parser.LexerError
+import dev.limebeck.templateEngine.render
 import dev.limebeck.templateEngine.runtime.KoteRuntimeException
 import dev.limebeck.templateEngine.runtime.Resource
 import dev.limebeck.templateEngine.runtime.RuntimeObject
@@ -10,6 +11,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 class RenderTest {
+    val defaultRenderer = KoTeRenderer()
+
     @Test
     fun jsonLikeMapOutput() = runTest {
         fun String.normalize() = replace("\\s".toRegex(), "")
@@ -161,6 +164,30 @@ class RenderTest {
     }
 
     @Test
+    fun iterableFor() = runTest {
+        val renderer = KoTeRenderer()
+
+        val template = """
+            Hello, {{ let some = "" }}{{ for value in arr }}{{
+            if (some == "") let some = value
+            else let some = (some + ', ' + value) endif
+                }}{{ endfor }}{{ some }}!
+        """.trimIndent()
+
+        val expectedOutputTrue = """
+            Hello, WORLD, USER!
+        """.trimIndent()
+
+        assertEquals(
+            expectedOutputTrue, renderer.render(
+                template, mapOf(
+                    "arr" to listOf("WORLD", "USER")
+                )
+            ).getValueOrNull()
+        )
+    }
+
+    @Test
     fun nestedCondition() = runTest {
         val renderer = KoTeRenderer()
 
@@ -228,6 +255,14 @@ class RenderTest {
                 renderer.render(it, mapOf())
             }
         }
+    }
+
+    @Test
+    fun equalsRender() = runTest {
+        assertEquals("true", defaultRenderer.render("""{{ 1 == 1 }}""").getValueOrNull())
+        assertEquals("true", defaultRenderer.render("""{{ (1 == 1) == true }}""").getValueOrNull())
+        assertEquals("false", defaultRenderer.render("""{{ 1 == "1" }}""").getValueOrNull())
+        assertEquals("false", defaultRenderer.render("""{{ 1 == "1" == 1 }}""").getValueOrNull())
     }
 
     @Test

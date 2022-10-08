@@ -2,10 +2,9 @@ package dev.limebeck.templateEngine.runtime
 
 interface RuntimeContext {
     val resourceLoader: ResourceLoader
-//    val resources: List<Resource>
     val renderer: Renderer
     fun get(key: String): RuntimeObject
-    fun set(key: String, obj: RuntimeObject)
+    fun set(key: String, obj: RuntimeObject?)
 }
 
 fun Any?.wrap(): RuntimeObject =
@@ -41,8 +40,12 @@ class MapContext(
         return runtimeObjects[key] ?: throw KoteRuntimeException("<52662afc> Context not found by key '$key'")
     }
 
-    override fun set(key: String, obj: RuntimeObject) {
-        runtimeObjects[key] = obj
+    override fun set(key: String, obj: RuntimeObject?) {
+        if (obj == null) {
+            runtimeObjects.remove(key)
+        } else {
+            runtimeObjects[key] = obj
+        }
     }
 
     operator fun plus(another: Map<String, RuntimeObject>): RuntimeContext {
