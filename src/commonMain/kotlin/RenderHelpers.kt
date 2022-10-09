@@ -3,6 +3,7 @@ package dev.limebeck.templateEngine
 import dev.limebeck.templateEngine.runtime.RuntimeObject
 
 
+//TODO: Move to SimpleRenderer object
 fun List<RuntimeObject>.render() = joinToString("") { render(it) }
 
 fun renderObjectToJson(objectWrapper: RuntimeObject.ObjectWrapper): String {

@@ -3,14 +3,12 @@ import dev.limebeck.templateEngine.parser.LanguageToken
 import dev.limebeck.templateEngine.parser.MustacheLikeLanguageParser
 import dev.limebeck.templateEngine.parser.MustacheLikeTemplateTokenizer
 import dev.limebeck.templateEngine.parser.TemplateToken
-import utils.runTest
-import kotlin.test.Test
-import kotlin.test.assertContentEquals
-import kotlin.test.assertEquals
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.ints.shouldBeExactly
+import io.kotest.matchers.shouldBe
 
-class TokenizerTest {
-    @Test
-    fun tokenizeSimpleTemplate() {
+class TokenizerTest : FunSpec({
+    test("Tokenize simple template") {
         val simpleTextTemplate = """
             Hello, {{ name }}!
             Object value: "{{ object.value }}"
@@ -20,18 +18,18 @@ class TokenizerTest {
 
         val tokenizer = MustacheLikeTemplateTokenizer()
         val tokens = tokenizer.analyze(stream)
-        assertEquals(7, tokens.size)
-        assertEquals("Hello, ", (tokens[0] as? TemplateToken.TemplateSource)?.text)
-        assertEquals("name", (tokens[1] as? TemplateToken.LanguagePart)?.text)
-        assertEquals("!\nObject value: \"", (tokens[2] as? TemplateToken.TemplateSource)?.text)
-        assertEquals("object.value", (tokens[3] as? TemplateToken.LanguagePart)?.text)
-        assertEquals("\"\n", (tokens[4] as? TemplateToken.TemplateSource)?.text)
-        assertEquals("obj", (tokens[5] as? TemplateToken.LanguagePart)?.text)
-        assertEquals("another", (tokens[6] as? TemplateToken.LanguagePart)?.text)
+
+        tokens.size shouldBeExactly 7
+        (tokens[0] as? TemplateToken.TemplateSource)?.text shouldBe "Hello, "
+        (tokens[1] as? TemplateToken.LanguagePart)?.text shouldBe "name"
+        (tokens[2] as? TemplateToken.TemplateSource)?.text shouldBe "!\nObject value: \""
+        (tokens[3] as? TemplateToken.LanguagePart)?.text shouldBe "object.value"
+        (tokens[4] as? TemplateToken.TemplateSource)?.text shouldBe "\"\n"
+        (tokens[5] as? TemplateToken.LanguagePart)?.text shouldBe "obj"
+        (tokens[6] as? TemplateToken.LanguagePart)?.text shouldBe "another"
     }
 
-    @Test
-    fun parseLanguageTokensFromTemplate() = runTest {
+    test("Parse language tokens from template") {
         val simpleTextTemplate = """
             Hello, {{ name }}!
             Object value: "{{ object.value }}"
@@ -48,11 +46,11 @@ class TokenizerTest {
 
         val languageParser = MustacheLikeLanguageParser()
         val languageTokens = languageParser.parse(tokens.asSequence()).toList()
-        assertEquals(32, languageTokens.size)
+
+        languageTokens.size shouldBeExactly 32
     }
 
-    @Test
-    fun parseKeywordFromTemplate() = runTest {
+    test("Parse keywords from tempalate") {
         val simpleTextTemplate = """
             {{ true }}{{ false }}
         """.trimIndent()
@@ -63,10 +61,8 @@ class TokenizerTest {
 
         val languageParser = MustacheLikeLanguageParser()
         val languageTokens = languageParser.parse(tokens.asSequence()).toList()
-        assertEquals(2, languageTokens.size)
-        assertContentEquals(
-            listOf("true", "false"),
-            languageTokens.map { (it as? LanguageToken.Keyword)?.name }
-        )
+
+        languageTokens.size shouldBeExactly 2
+        languageTokens.map { (it as? LanguageToken.Keyword)?.name } shouldBe listOf("true", "false")
     }
-}
+})

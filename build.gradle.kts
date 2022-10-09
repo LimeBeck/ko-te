@@ -1,14 +1,17 @@
 plugins {
     kotlin("multiplatform")
     id("maven-publish")
+    id("signing")
     id("com.github.ben-manes.versions").version("0.42.0")
-    signing
+    id("org.jetbrains.dokka")
+    id("io.kotest.multiplatform")
 }
 
 val kotlinCoroutinesVersion: String by project
+val kotestVersion: String by project
 
 group = "dev.limebeck"
-version = "0.2.5"
+version = "0.2.6"
 
 repositories {
     mavenCentral()
@@ -49,8 +52,7 @@ kotlin {
             }
         }
         binaries.executable()
-        nodejs {
-        }
+        nodejs()
     }
 
     val hostOs = System.getProperty("os.name")
@@ -97,6 +99,9 @@ kotlin {
         }
         val commonTest by getting {
             dependencies {
+                implementation("io.kotest:kotest-framework-engine:$kotestVersion")
+                implementation("io.kotest:kotest-assertions-core:$kotestVersion")
+                implementation("io.kotest:kotest-framework-datatest:$kotestVersion")
                 implementation(kotlin("test"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${kotlinCoroutinesVersion}") {
                     version {
@@ -108,6 +113,7 @@ kotlin {
         val jvmMain by getting
         val jvmTest by getting {
             dependencies {
+                implementation("io.kotest:kotest-runner-junit5:$kotestVersion")
             }
         }
         val jsMain by getting {
@@ -193,4 +199,8 @@ publishing {
 
 signing {
     sign(publishing.publications)
+}
+
+tasks.dokkaHtml.configure {
+    outputDirectory.set(buildDir.resolve("dokka"))
 }

@@ -2,74 +2,64 @@ import dev.limebeck.templateEngine.Result
 import dev.limebeck.templateEngine.parser.ParserError
 import dev.limebeck.templateEngine.render
 import dev.limebeck.templateEngine.runtime.*
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.shouldBe
 import utils.parseAst
-import utils.runTest
-import kotlin.test.Test
-import kotlin.test.assertEquals
 
-class EvaluatorTest {
-    private val emptyResourceLoader = StaticResourceLoader()
+class EvaluatorTest : FunSpec({
+    val emptyResourceLoader = StaticResourceLoader()
+    val runtimeEngine = SimpleRuntimeEngine
 
-    private val renderer = object : Renderer {
+    val renderer = object : Renderer {
         override suspend fun render(templateName: String, context: RuntimeContext): Result<String, ParserError> {
             TODO("<cc8f3059> Not yet implemented")
         }
     }
 
-    @Test
-    fun evaluateSimpleTemplate() = runTest {
+    test("Simple template") {
         val simpleTemplate = """Simple Template"""
-        val runtimeEngine = SimpleRuntimeEngine
         val result = runtimeEngine.evaluateProgram(
-                root = simpleTemplate.parseAst(),
-                context = mapOf<String, RuntimeObject>().asContext(renderer, emptyResourceLoader)
-            )
-        assertEquals(simpleTemplate, result.render())
+            root = simpleTemplate.parseAst(),
+            context = mapOf<String, RuntimeObject>().asContext(renderer, emptyResourceLoader)
+        )
+        result.render() shouldBe simpleTemplate
     }
 
-    @Test
-    fun evaluateTemplateWithVariable() = runTest {
+    test("Template with variable") {
         val template = """Value: {{ variable }}"""
-        val runtimeEngine = SimpleRuntimeEngine
         val result = runtimeEngine.evaluateProgram(
             template.parseAst(),
             mapOf("variable" to RuntimeObject.StringWrapper("value")).asContext(renderer, emptyResourceLoader)
         )
-        assertEquals("Value: value", result.render())
+        result.render() shouldBe "Value: value"
     }
 
-    @Test
-    fun evaluateTemplateWithLiterals() = runTest {
+    test("Template with literals") {
         val template = """{{ "value" }}{{ 100 }}"""
-        val runtimeEngine = SimpleRuntimeEngine
         val result = runtimeEngine.evaluateProgram(
             template.parseAst(),
             context = mapOf<String, RuntimeObject>().asContext(renderer, emptyResourceLoader)
         )
-        assertEquals("value100", result.render())
+        result.render() shouldBe "value100"
     }
 
-    @Test
-    fun evaluateTemplateWithFunction() = runTest {
-        val template = """{{ function(variable) }}"""
-        val runtimeEngine = SimpleRuntimeEngine
+    test("Template with function") {
+        val template = """{{ greeting(name) }}"""
         val result = runtimeEngine.evaluateProgram(
             template.parseAst(),
             mapOf(
-                "variable" to RuntimeObject.StringWrapper("World"),
-                "function" to RuntimeObject.CallableWrapper { args, ctx ->
+                "name" to RuntimeObject.StringWrapper("World"),
+                "greeting" to RuntimeObject.CallableWrapper { args, ctx ->
                     val name = args.first() as RuntimeObject.StringWrapper
                     RuntimeObject.StringWrapper("Hello, ${name.string}")
                 }
             ).asContext(renderer, emptyResourceLoader)
         )
-        assertEquals("Hello, World", result.render())
+        result.render() shouldBe "Hello, World"
     }
 
-    @Test
-    fun evaluateTemplateWithHighOrderFunction() = runTest {
+    test("Template with high order function") {
         val template = """{{ function("Hello")(variable) }}"""
-        val runtimeEngine = SimpleRuntimeEngine
         val result = runtimeEngine.evaluateProgram(
             template.parseAst(),
             mapOf(
@@ -81,6 +71,6 @@ class EvaluatorTest {
                 }
             ).asContext(renderer, emptyResourceLoader)
         )
-        assertEquals("Hello, World", result.render())
+        result.render() shouldBe "Hello, World"
     }
-}
+})

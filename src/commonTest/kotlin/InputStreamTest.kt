@@ -1,53 +1,62 @@
 import dev.limebeck.templateEngine.inputStream.toStream
-import kotlin.test.*
+import io.kotest.assertions.withClue
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.iterator.shouldHaveNext
+import io.kotest.matchers.iterator.shouldNotHaveNext
+import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.shouldBe
 
-class InputStreamTest {
-    @Test
-    fun streamFromString() {
+class InputStreamTest : FunSpec ({
+    test("Stream from string") {
         val string = """
             val variable = "Value"
             val anotherVariable = functionCall(variable)
         """.trimIndent()
         val stream = string.toStream()
 
-        assertTrue("Stream has next value") { stream.hasNext() }
-
-        stream.debug()
-
-        assertEquals('v', stream.peek())
-        assertEquals('v', stream.peek())
-        assertEquals('v', stream.next())
-        assertEquals('a', stream.peek())
-        assertEquals('a', stream.next())
-        assertEquals(1, stream.currentPosition.line)
-        assertEquals(2, stream.currentPosition.absolutePosition)
-
-        stream.debug()
-
-        for(char in stream){
-            assertNotNull(char)
+        withClue("Stream has next value"){
+            stream.hasNext() shouldBe true
         }
-        assertFalse("End of stream must be reached") { stream.hasNext() }
+        stream.peek() shouldBe 'v'
+        stream.peek() shouldBe 'v'
+        stream.next() shouldBe 'v'
+
+        stream.peek() shouldBe 'a'
+        stream.next() shouldBe 'a'
+
+        stream.currentPosition.line shouldBe 1
+        stream.currentPosition.absolutePosition shouldBe 2
+
+        for (char in stream) {
+            char.shouldNotBeNull()
+        }
+        withClue("End of stream must be reached"){
+            stream.shouldNotHaveNext()
+        }
 
         stream.seek(0)
 
-        assertTrue("Must be rewinded to start") { stream.hasNext() }
-        assertEquals('v', stream.peek())
+        withClue("Must be rewinded to start"){
+            stream.shouldHaveNext()
+            stream.peek() shouldBe 'v'
+            stream.currentPosition.absolutePosition shouldBe 0
+        }
 
-        stream.seek(23)
-        assertEquals('v', stream.peek())
+        withClue("Rewind to position 23") {
+            stream.seek(23)
+            stream.peek() shouldBe 'v'
+        }
     }
 
-    @Test
-    fun positioningTest() {
+    test("Stream positioning") {
         val stream = """
             123
             456
         """.trimIndent().toStream()
-        assertEquals(4, stream.getPositionAtLineStart(2))
+        stream.getPositionAtLineStart(2) shouldBe 4
 
         stream.seek(4)
 
-        assertEquals('4', stream.peek())
+        stream.peek() shouldBe '4'
     }
-}
+})
