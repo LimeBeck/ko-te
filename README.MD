@@ -106,6 +106,8 @@ permissions of the application. Compilation caching and a compile/render API are
 Use JDK 21 to build and test. The published JVM library requires Java 11 or newer.
 Gradle 9.7.0 and Kotlin 2.4.20 are pinned in the build.
 
+See [ROADMAP.md](ROADMAP.md) for planned milestones and their acceptance criteria.
+
 ```shell
 ./gradlew jvmTest jsNodeTest nativeTest
 ./gradlew build
