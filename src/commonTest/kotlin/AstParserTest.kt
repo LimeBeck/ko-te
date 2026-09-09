@@ -40,7 +40,7 @@ class AstParserTest {
         assertEquals(2, list.size)
         val expected = listOf(
             AstLexeme.Number(SimplePosition.MOCK, 123),
-            AstLexeme.Number(SimplePosition.MOCK, 123.456F)
+            AstLexeme.Number(SimplePosition.MOCK, 123.456)
         )
         assertContentEquals(expected, list)
     }
@@ -59,7 +59,7 @@ class AstParserTest {
                 left = AstLexeme.InfixOperation(
                     streamPosition = SimplePosition.MOCK,
                     left = AstLexeme.Number(SimplePosition.MOCK, 123),
-                    right = AstLexeme.Number(SimplePosition.MOCK, 123.456F),
+                    right = AstLexeme.Number(SimplePosition.MOCK, 123.456),
                     operation = Operation.PLUS
                 ),
                 right = AstLexeme.Number(SimplePosition.MOCK, 2),
@@ -83,7 +83,7 @@ class AstParserTest {
                 left = AstLexeme.InfixOperation(
                     streamPosition = SimplePosition.MOCK,
                     left = AstLexeme.Number(SimplePosition.MOCK, 123),
-                    right = AstLexeme.Number(SimplePosition.MOCK, 123.456F),
+                    right = AstLexeme.Number(SimplePosition.MOCK, 123.456),
                     operation = Operation.PLUS
                 ),
                 right = AstLexeme.Number(SimplePosition.MOCK, 2),

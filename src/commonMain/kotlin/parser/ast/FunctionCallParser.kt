@@ -18,58 +18,29 @@ object FunctionCallParser : ComplexParser {
         }
     }
 
-    override fun canParseNext(stream: RewindableInputStream<LanguageToken>): Boolean = recoverable(stream) {
-        if (!stream.hasNext())
-            return@recoverable false
-
-        val nextItem = stream.peek()
-        val hasOpenBracket = nextItem is LanguageToken.Punctuation && nextItem.value == "("
-
-        if (hasOpenBracket) {
-            stream.next()
-            val innerValues = stream.readUntil { !(it is LanguageToken.Punctuation && it.value == ")") }
-            val closedBracket = stream.peek()
-            val hasClosedBracket = closedBracket is LanguageToken.Punctuation && closedBracket.value == ")"
-            return@recoverable hasClosedBracket
-        }
-        return@recoverable false
-    }
+    override fun canParseNext(stream: RewindableInputStream<LanguageToken>): Boolean =
+        stream.hasNext() && (stream.peek() as? LanguageToken.Punctuation)?.value == "("
 
     override fun parseNext(
         stream: RewindableInputStream<LanguageToken>,
         prevExpression: AstLexeme.Expression
     ): AstLexeme.FunctionCall {
-        val nextItem = stream.peek()
-        val hasOpenBracket = nextItem is LanguageToken.Punctuation && nextItem.value == "("
-        if (!hasOpenBracket)
-            stream.throwErrorOnValue("punctuation '('")
-        stream.skipNext(1)
-
-        val innerValues = stream.readUntil { !(it is LanguageToken.Punctuation && it.value == ")") }
-        val closedBracket = stream.peek()
-        val hasClosedBracket = closedBracket is LanguageToken.Punctuation && closedBracket.value == ")"
-        if (!hasClosedBracket)
-            stream.throwErrorOnValue("punctuation ')'")
-
-        val innerValueStreams = innerValues.fold(mutableListOf<MutableList<LanguageToken>>()) { acc, languageToken ->
-            if (acc.isEmpty()) {
-                acc.add(mutableListOf())
+        if (!canParseNext(stream)) stream.throwErrorOnValue("'('")
+        stream.next()
+        val arguments = mutableListOf<AstLexeme.FunctionArgument>()
+        if ((stream.peekOrNull() as? LanguageToken.Punctuation)?.value != ")") {
+            while (true) {
+                val position = stream.currentPosition.copy()
+                val value = ExpressionParser.parse(stream)
+                arguments.add(AstLexeme.FunctionArgument(position, null, value))
+                stream.next()
+                val separator = (stream.peekOrNull() as? LanguageToken.Punctuation)?.value
+                if (separator == ")") break
+                if (separator != ",") stream.throwErrorOnValue("',' or ')'")
+                stream.next()
             }
-            if (languageToken is LanguageToken.Punctuation && languageToken.value == ",") {
-                if (acc.last().isEmpty()) {
-                    stream.throwErrorOnValue("value before ','")
-                }
-                acc.add(mutableListOf<LanguageToken>())
-            } else {
-                acc.last().add(languageToken)
-            }
-            acc
         }
-
-        val arguments = innerValueStreams.map {
-            AstLexeme.FunctionArgument(stream.currentPosition.copy(), null, ExpressionParser.parse(it.toStream()))
-        }
-
+        if ((stream.peekOrNull() as? LanguageToken.Punctuation)?.value != ")") stream.throwErrorOnValue("')'")
         return AstLexeme.FunctionCall(stream.currentPosition.copy(), prevExpression, arguments)
     }
 

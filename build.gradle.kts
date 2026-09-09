@@ -1,146 +1,86 @@
+import org.gradle.api.attributes.java.TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     kotlin("multiplatform")
     id("maven-publish")
-    id("com.github.ben-manes.versions").version("0.42.0")
-    signing
+    id("io.github.ben-manes.versions") version "0.61.0"
+    id("com.vanniktech.maven.publish.base") version "0.37.0"
 }
 
-val kotlinCoroutinesVersion: String by project
+val kotlinCoroutinesVersion = providers.gradleProperty("kotlinCoroutinesVersion").get()
+val junitVersion = providers.gradleProperty("junitVersion").get()
 
 group = "dev.limebeck"
-version = "0.2.5"
+version = providers.gradleProperty("releaseVersion").orElse("0.3.0").get()
 
 repositories {
     mavenCentral()
 }
 
+val nativeArtifactId = when {
+    System.getProperty("os.name") == "Mac OS X" -> "ko-te-native-macos"
+    System.getProperty("os.name") == "Linux" -> "ko-te-native-linux"
+    System.getProperty("os.name").startsWith("Windows") -> "ko-te-native-win"
+    else -> throw GradleException("Host OS is not supported in Kotlin/Native.")
+}
+
 kotlin {
-    metadata {
-        mavenPublication {
-            artifactId = "ko-te"
-            pom {
-                name.set("Ko-Te template library metadata")
-                description.set("Kotlin metadata module for Ko-Te template library")
-            }
-        }
-    }
     jvm {
-        mavenPublication {
-            artifactId = "ko-te-jvm"
-            pom {
-                name.set("Ko-Te template library JVM")
-                description.set("Kotlin JVM module for Ko-Te template library")
-            }
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_11)
         }
-        compilations.all {
-            kotlinOptions.jvmTarget = "1.8"
+        compilations.named("test") {
+            compileTaskProvider.configure {
+                compilerOptions.jvmTarget.set(JvmTarget.JVM_21)
+            }
         }
         testRuns["test"].executionTask.configure {
             useJUnitPlatform()
         }
     }
 
-    js(IR) {
-        mavenPublication {
-            artifactId = "ko-te-js"
-            pom {
-                name.set("Ko-Te template library JS")
-                description.set("Kotlin JS module for Ko-Te template library")
-            }
-        }
-        binaries.executable()
-        nodejs {
-        }
+    js {
+        nodejs()
     }
 
-    val hostOs = System.getProperty("os.name")
-    val isMingwX64 = hostOs.startsWith("Windows")
-    val nativeTarget = when {
-        hostOs == "Mac OS X" -> macosX64("native") {
-            mavenPublication {
-                artifactId = "ko-te-native-macos"
-                pom {
-                    name.set("Ko-Te template library native-macos")
-                    description.set("Kotlin native-macos module for Ko-Te template library")
-                }
-            }
-        }
-
-        hostOs == "Linux" -> linuxX64("native") {
-            mavenPublication {
-                artifactId = "ko-te-native-linux"
-                pom {
-                    name.set("Ko-Te template library native-linux")
-                    description.set("Kotlin native-linux module for Ko-Te template library")
-                }
-            }
-        }
-
-        isMingwX64 -> mingwX64("native") {
-            mavenPublication {
-                artifactId = "ko-te-native-win"
-                pom {
-                    name.set("Ko-Te template library native-win")
-                    description.set("Kotlin native-win module for Ko-Te template library")
-                }
-            }
-        }
-
-        else -> throw GradleException("Host OS is not supported in Kotlin/Native.")
+    when (nativeArtifactId) {
+        "ko-te-native-macos" -> macosX64("native")
+        "ko-te-native-linux" -> linuxX64("native")
+        else -> mingwX64("native")
     }
 
     sourceSets {
-        val commonMain by getting {
-            dependencies {
-
-            }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+            implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:$kotlinCoroutinesVersion")
         }
-        val commonTest by getting {
-            dependencies {
-                implementation(kotlin("test"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${kotlinCoroutinesVersion}") {
-                    version {
-                        strictly(kotlinCoroutinesVersion)
-                    }
-                }
-            }
-        }
-        val jvmMain by getting
-        val jvmTest by getting {
-            dependencies {
-            }
-        }
-        val jsMain by getting {
-            dependencies {
-                implementation(kotlin("stdlib-js"))
-            }
-        }
-        val jsTest by getting {
-            dependencies {
-                implementation(kotlin("test-js"))
-            }
-        }
-        val nativeMain by getting
-        val nativeTest by getting {
-            dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinCoroutinesVersion")
-            }
+        jvmTest.dependencies {
+            implementation(project.dependencies.platform("org.junit:junit-bom:$junitVersion"))
+            implementation(kotlin("test-junit5"))
+            runtimeOnly("org.junit.jupiter:junit-jupiter-engine")
+            runtimeOnly("org.junit.platform:junit-platform-launcher")
         }
     }
 }
 
-val stubJavaDocJar by tasks.registering(Jar::class) {
+tasks.withType<JavaCompile>().configureEach {
+    options.release.set(if (name == "compileJvmTestJava") 21 else 11)
+}
+
+// Publish the runtime requirement without imposing it on JUnit's own dependencies.
+configurations.matching {
+    it.name in setOf("jvmApiElements", "jvmRuntimeElements", "jvmApiElements-published", "jvmRuntimeElements-published")
+}.configureEach {
+    attributes.attribute(TARGET_JVM_VERSION_ATTRIBUTE, 11)
+}
+
+val stubJavaDocJar = tasks.register<Jar>("stubJavaDocJar") {
     archiveClassifier.value("javadoc")
 }
 
 publishing {
-    kotlin.targets.forEach { target ->
-        val targetPublication: Publication? = publications.findByName(target.name)
-        if (targetPublication is MavenPublication) {
-            targetPublication.artifact(stubJavaDocJar.get())
-        }
-    }
-
     repositories {
         maven {
             name = "MainRepo"
@@ -158,13 +98,19 @@ publishing {
     }
 
     publications {
-        withType<MavenPublication> {
+        withType<MavenPublication>().configureEach {
+            artifact(stubJavaDocJar)
+            artifactId = when (name) {
+                "kotlinMultiplatform" -> "ko-te"
+                "jvm" -> "ko-te-jvm"
+                "js" -> "ko-te-js"
+                "native" -> nativeArtifactId
+                else -> artifactId
+            }
             val publicationName = this.name
             pom {
-                if (publicationName == "kotlinMultiplatform") {
-                    name.set("Ko-Te")
-                    description.set("Ko-Te template library")
-                }
+                name.set(if (publicationName == "kotlinMultiplatform") "Ko-Te" else "Ko-Te $publicationName")
+                description.set("Ko-Te template library ($publicationName)")
                 groupId = "dev.limebeck"
                 url.set("https://github.com/LimeBeck/ko-te")
                 developers {
@@ -191,6 +137,7 @@ publishing {
     }
 }
 
-signing {
-    sign(publishing.publications)
+mavenPublishing {
+    publishToMavenCentral()
+    signAllPublications()
 }

@@ -14,7 +14,7 @@ fun Any?.wrap(): RuntimeObject =
         is String -> RuntimeObject.StringWrapper(this)
         is Number -> RuntimeObject.NumberWrapper(this)
         is Boolean -> RuntimeObject.BooleanWrapper(this)
-        is Collection<*> -> RuntimeObject.CollectionWrapper(this.mapNotNull { it?.wrap() })
+        is Collection<*> -> RuntimeObject.CollectionWrapper(this.map { it.wrap() })
         is Map<*, *> -> RuntimeObject.ObjectWrapper(this.entries.associate {
             val (key, value) = it
             if (key !is String)
@@ -25,7 +25,7 @@ fun Any?.wrap(): RuntimeObject =
         else -> throw KoteRuntimeException("<13f5b28> Unsupported context item $this")
     }
 
-fun Map<String, Any>.wrapAll(): Map<String, RuntimeObject> = entries.associate {
+fun Map<String, Any?>.wrapAll(): Map<String, RuntimeObject> = entries.associate {
     it.key to it.value.wrap()
 }
 

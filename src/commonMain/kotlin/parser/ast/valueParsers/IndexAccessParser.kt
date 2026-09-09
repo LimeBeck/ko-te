@@ -31,7 +31,7 @@ object IndexAccessParser : ComplexParser {
         if (hasOpenBracket) {
             stream.next()
             val index = stream.peek()
-            if (index is LanguageToken.NumericValue && index.value.isInteger()) {
+            if (index is LanguageToken.NumericValue && index.value.isInteger() && index.value.toLong() in 0L..Int.MAX_VALUE.toLong()) {
                 stream.next()
                 val closedBracket = stream.peek()
                 val hasClosedBracket = closedBracket is LanguageToken.Punctuation && closedBracket.value == "]" 
@@ -52,7 +52,7 @@ object IndexAccessParser : ComplexParser {
             stream.throwErrorOnValue("punctuation '['")
         stream.skipNext(1)
         val index = stream.peek().also {
-            if (it !is LanguageToken.NumericValue || !it.value.isInteger())
+            if (it !is LanguageToken.NumericValue || (!it.value.isInteger() || it.value.toLong() !in 0L..Int.MAX_VALUE.toLong()))
                 stream.throwErrorOnValue("integer number")
         } as LanguageToken.NumericValue
         stream.next()
