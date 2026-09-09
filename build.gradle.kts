@@ -12,7 +12,7 @@ val kotlinCoroutinesVersion = providers.gradleProperty("kotlinCoroutinesVersion"
 val junitVersion = providers.gradleProperty("junitVersion").get()
 
 group = "dev.limebeck"
-version = providers.gradleProperty("releaseVersion").orElse("0.2.5").get()
+version = providers.gradleProperty("releaseVersion").orElse("0.3.0").get()
 
 repositories {
     mavenCentral()

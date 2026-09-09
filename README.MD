@@ -12,11 +12,11 @@ Use Maven Central and the root multiplatform artifact:
 ```kotlin
 repositories { mavenCentral() }
 // In commonMain.dependencies (or dependencies for a JVM project):
-implementation("dev.limebeck:ko-te:0.2.5")
+implementation("dev.limebeck:ko-te:0.3.0")
 ```
 
-`0.2.5` is the existing release version. The corrections in [CHANGELOG.md](CHANGELOG.md)
-are currently unreleased; build this checkout to use them until a new version is published.
+`0.3.0` is the release prepared by this checkout; repository availability depends on completion
+of publication. See [CHANGELOG.md](CHANGELOG.md) for changes and migration notes from `0.2.5`.
 
 ## Example
 
