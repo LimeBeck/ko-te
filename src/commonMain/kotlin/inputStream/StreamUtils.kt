@@ -46,7 +46,7 @@ fun <T> InputStream<T>.skipNext(n: Int) {
     }
 }
 
-fun isEmpty(char: Char) = char in listOf(' ', '\n')
+fun isEmpty(char: Char) = char.isWhitespace()
 
 fun InputStream<Char>.skipEmpty() {
     while (hasNext() && isEmpty(peek())) {

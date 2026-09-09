@@ -320,19 +320,16 @@ class RenderTest {
     }
 
     @Test
-    fun languageReference() {
+    fun languageReference() = runTest {
         val reference = """
-            Variable access: {{ variable }}
-            Key access: {{ object.value }}
-            Index access: {{ array[0] }}
-            Function call with round brackets syntax: {{ uppercase(variable) }}
-            Function call with pipe syntax: {{ variable | uppercase }}
-            Variable assign: {{ let newVariable = "value" | uppercase }}
-            Multiline block: {{
-                let first = 20
-                let second = 30
-                first + second
-            }}
+            {{ let first = 20
+               let second = 30
+               first + second }}
+            {{ if(first == 20) }}yes{{ else }}no{{ endif }}
+            {{ object.value[0] }}
         """.trimIndent()
+        assertEquals("50\nyes\nvalue", defaultRenderer.render(reference,
+            mapOf("object" to mapOf("value" to listOf("value")))
+        ).getValueOrNull())
     }
 }

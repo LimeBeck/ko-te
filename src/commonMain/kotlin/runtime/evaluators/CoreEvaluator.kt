@@ -20,6 +20,6 @@ object CoreEvaluator : Evaluator<AstLexeme, RuntimeObject> {
             is AstLexeme.Import -> ImportEvaluator.eval(lexeme, context)
             is AstLexeme.Iterator -> IterableEvaluator.eval(lexeme, context)
             else -> throw KoteRuntimeException("<2a2090f2> Can`t evaluate expression $lexeme")
-        } as EvalResult<RuntimeObject>
+        }
     }
 }

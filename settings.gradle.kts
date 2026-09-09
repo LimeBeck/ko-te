@@ -1,7 +1,7 @@
 rootProject.name = "ko-te"
 
 pluginManagement {
-    val kotlinVersion: String by settings
+    val kotlinVersion = providers.gradleProperty("kotlinVersion").get()
     plugins {
         kotlin("multiplatform") version kotlinVersion
     }

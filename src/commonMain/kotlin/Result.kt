@@ -1,13 +1,13 @@
 package dev.limebeck.templateEngine
 
-sealed interface Result<Value, Error> {
+sealed interface Result<out Value, out Error> {
     companion object {
         fun <Value> ofSuccess(value: Value) = Success(value)
         fun <Error> ofError(error: Error) = Error(error)
     }
 
-    data class Success<Value>(val value: Value) : Result<Value, Nothing>
-    data class Error<Error>(val error: Error) : Result<Nothing, Error>
+    data class Success<out Value>(val value: Value) : Result<Value, Nothing>
+    data class Error<out Error>(val error: Error) : Result<Nothing, Error>
 
     val isSuccess: Boolean
         get() = this is Success

@@ -15,37 +15,36 @@ interface AstLexemeValueParser {
 interface ComplexParser : AstLexemeParser<AstLexeme.Expression>, AstLexemeValueParser
 
 object ExpressionParser : AstLexemeParser<AstLexeme.Expression> {
-    private val expressionParsers = listOf<AstLexemeParser<AstLexeme.Expression>>(
-        LiteralParser,
-        FunctionCallParser as AstLexemeParser<AstLexeme.Expression>,
-        KeyAccessParser as AstLexemeParser<AstLexeme.Expression>,
-        IndexAccessParser as AstLexemeParser<AstLexeme.Expression>,
-        IdentifierParser as AstLexemeParser<AstLexeme.Expression>,
-        GroupExpressionParser as AstLexemeParser<AstLexeme.Expression>
-    )
+    private val partialParsers = listOf(FunctionCallParser, KeyAccessParser, IndexAccessParser)
 
-    private val partialParsers = expressionParsers.filterIsInstance<AstLexemeValueParser>() + listOf(
-        OperationParser as AstLexemeValueParser
-    )
+    override fun canParse(stream: RewindableInputStream<LanguageToken>): Boolean =
+        LiteralParser.canParse(stream) || IdentifierParser.canParse(stream) || GroupExpressionParser.canParse(stream)
 
-    override fun canParse(stream: RewindableInputStream<LanguageToken>): Boolean {
-        return expressionParsers.any { it.canParse(stream) }
-    }
+    override fun parse(stream: RewindableInputStream<LanguageToken>): AstLexeme.Expression = parse(stream, 0)
 
-    override fun parse(stream: RewindableInputStream<LanguageToken>): AstLexeme.Expression {
-        var value = expressionParsers.find { it.canParse(stream) }?.parse(stream)
-            ?: stream.throwErrorOnValue("value")
-
-        while (stream.hasNext()) {
-            val rewindPoint = stream.currentPosition.absolutePosition
-            stream.next()
-            value = partialParsers
-                .find { it.canParseNext(stream) }
-                ?.parseNext(stream, value)
-                .also { it ?: stream.seek(rewindPoint) }
-                ?: break
+    // Like the other AST parsers, leave the stream on the expression's last token.
+    internal fun parse(stream: RewindableInputStream<LanguageToken>, minimumPrecedence: Int): AstLexeme.Expression {
+        var value = when {
+            LiteralParser.canParse(stream) -> LiteralParser.parse(stream)
+            IdentifierParser.canParse(stream) -> IdentifierParser.parse(stream)
+            GroupExpressionParser.canParse(stream) -> GroupExpressionParser.parse(stream)
+            else -> stream.throwErrorOnValue("value")
         }
-
+        while (stream.hasNext()) {
+            val endPosition = stream.currentPosition.absolutePosition
+            stream.next()
+            val suffix = partialParsers.find { it.canParseNext(stream) }
+            if (suffix != null) {
+                value = suffix.parseNext(stream, value)
+                continue
+            }
+            val operation = OperationParser.peekOperation(stream)
+            if (operation == null || operation.presence < minimumPrecedence) {
+                stream.seek(endPosition)
+                break
+            }
+            value = OperationParser.parseNext(stream, value)
+        }
         return value
     }
 }

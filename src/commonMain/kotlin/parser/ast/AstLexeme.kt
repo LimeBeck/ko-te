@@ -103,12 +103,12 @@ enum class Operation(
     val presence: Int,
     val associativity: Associativity
 ) {
-    PLUS("+", 10, Associativity.RIGHT),
-    MINUS("-", 10, Associativity.RIGHT),
-    MULTIPLY("*", 20, Associativity.RIGHT),
-    DIVIDE("/", 30, Associativity.RIGHT),
-    PERCENT("%", 10, Associativity.RIGHT),
-    EQUALS("==", 10, Associativity.RIGHT);
+    PLUS("+", 10, Associativity.LEFT),
+    MINUS("-", 10, Associativity.LEFT),
+    MULTIPLY("*", 20, Associativity.LEFT),
+    DIVIDE("/", 20, Associativity.LEFT),
+    PERCENT("%", 20, Associativity.LEFT),
+    EQUALS("==", 5, Associativity.LEFT);
 
     companion object {
         fun find(value: String) = Operation.values().find { it.stringValue == value }

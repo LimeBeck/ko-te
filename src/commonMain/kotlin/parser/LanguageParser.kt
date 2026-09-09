@@ -30,26 +30,25 @@ class MustacheLikeLanguageParser : LanguageParser {
 
         return sequence {
             while (stream.hasNext()) {
+                val local = stream.currentPosition
+                val base = token.startPosition as? CharInputStream.StringPosition
+                val position = if (base == null) token.startPosition else CharInputStream.StringPosition(
+                    base.absolutePosition + local.absolutePosition,
+                    base.line + local.line - 1,
+                    if (local.line == 1) base.column + local.column else local.column
+                )
                 val nextChar = stream.peek()
                 when {
                     nextChar.isOperation() -> {
-                        yield(LanguageToken.Operation(nextChar.toString(), startPosition = token.startPosition))
+                        yield(LanguageToken.Operation(nextChar.toString(), startPosition = position))
                         stream.next()
                     }
                     nextChar.isPunctuation() -> {
-                        yield(LanguageToken.Punctuation(nextChar.toString(), startPosition = token.startPosition))
+                        yield(LanguageToken.Punctuation(nextChar.toString(), startPosition = position))
                         stream.next()
                     }
-                    ALLOWED_STRING_DEFINITIONS.any { stream.isNextSequenceEquals(it.toList()) } -> {
-                        val stringDefs = stream.readUntil { it.isStringDef() }
-                        if(stringDefs.size % 2 == 0){
-                            yield(LanguageToken.StringValue("", startPosition = token.startPosition))
-                        } else {
-                            val stringDef = stringDefs.first()
-                            val string = stream.readUntil { it != stringDef }.joinToString("")
-                            stream.skipNext(listOf(stringDef))
-                            yield(LanguageToken.StringValue(string, startPosition = token.startPosition))
-                        }
+                    nextChar.isStringDef() -> {
+                        yield(LanguageToken.StringValue(stream.readStringLiteral().value, startPosition = position))
                     }
                     nextChar.isDigit() -> {
                         var hasPointInside = false
@@ -60,7 +59,7 @@ class MustacheLikeLanguageParser : LanguageParser {
                                     return@readUntil true
                                 } else {
                                     throw LanguageError(
-                                        position = token.startPosition,
+                                        position = position,
                                         message = "<1ac7d0b6> Unexpected point inside number ${token.text}"
                                     )
                                 }
@@ -69,8 +68,14 @@ class MustacheLikeLanguageParser : LanguageParser {
                         }.joinToString("")
                         yield(
                             LanguageToken.NumericValue(
-                                value = if (hasPointInside) digit.toFloat() else digit.toInt(),
-                                startPosition = token.startPosition
+                                value = if (hasPointInside) {
+                                    digit.toDoubleOrNull()?.takeIf { it.isFinite() }
+                                        ?: throw LanguageError("Invalid number: $digit", position)
+                                } else {
+                                    digit.toIntOrNull() ?: digit.toLongOrNull()
+                                        ?: throw LanguageError("Integer is outside Long range: $digit", position)
+                                },
+                                startPosition = position
                             )
                         )
                     }
@@ -83,19 +88,19 @@ class MustacheLikeLanguageParser : LanguageParser {
                         }.joinToString("")
 
                         if (identifier in KEYWORDS) {
-                            yield(LanguageToken.Keyword(identifier, startPosition = token.startPosition))
+                            yield(LanguageToken.Keyword(identifier, startPosition = position))
                         } else {
                             yield(
                                 LanguageToken.Identifier(
                                     name = identifier,
-                                    startPosition = token.startPosition
+                                    startPosition = position
                                 )
                             )
                         }
                     }
                     else -> {
                         throw LanguageError(
-                            position = token.startPosition,
+                            position = position,
                             message = "<4bf66c83> Unexpected token '${token.text}'"
                         )
                     }
