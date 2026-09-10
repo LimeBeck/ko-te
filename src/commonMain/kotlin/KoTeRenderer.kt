@@ -13,7 +13,6 @@ class KoTeRenderer(
     private val resourceLoader: ResourceLoader = StaticResourceLoader(),
     predefinedObjectsProvider: () -> Map<String, RuntimeObject> = { emptyMap() }
 ) {
-    private val runtimeEngine = SimpleRuntimeEngine
     private val tokenizer = MustacheLikeTemplateTokenizer()
     private val languageParser = MustacheLikeLanguageParser()
     private val astParser = KoTeAstParser()
@@ -23,15 +22,21 @@ class KoTeRenderer(
     private fun createContext(data: JsonObject): RuntimeContext {
         // The stack belongs to one render, so simultaneous renders cannot affect each other.
         val importStack = mutableListOf<String>()
-        val renderer = object : Renderer {
+        val renderer = object : BlockRenderer {
             override suspend fun render(templateName: String, context: RuntimeContext): Result<String, ParserError> {
+                val output = StringBuilder()
+                renderInto(templateName, context, output)
+                return Result.ofSuccess(output.toString())
+            }
+
+            override suspend fun renderInto(templateName: String, context: RuntimeContext, output: StringBuilder) {
                 if (templateName in importStack) {
                     throw KoteRuntimeException("Cyclic template import: ${(importStack + templateName).joinToString(" -> ")}")
                 }
                 if (importStack.size >= 64) throw KoteRuntimeException("Maximum import depth (64) exceeded")
                 importStack.add(templateName)
                 try {
-                    return renderString(resourceLoader.loadTemplate(templateName), context)
+                    this@KoTeRenderer.renderInto(resourceLoader.loadTemplate(templateName), context, output)
                 } finally {
                     importStack.removeAt(importStack.lastIndex)
                 }
@@ -41,13 +46,17 @@ class KoTeRenderer(
     }
 
     internal suspend fun renderString(template: String, context: RuntimeContext): Result<String, ParserError> {
+        val output = StringBuilder()
+        renderInto(template, context, output)
+        return Result.ofSuccess(output.toString())
+    }
+
+    private suspend fun renderInto(template: String, context: RuntimeContext, output: StringBuilder) {
         val templateStream = template.toStream()
         val tokens = tokenizer.analyze(templateStream)
         val languageTokens = languageParser.parse(tokens.asSequence())
         val ast = astParser.parse(languageTokens)
-        return Result.ofSuccess(
-            runtimeEngine.evaluateProgram(ast, context).render()
-        )
+        BlockExecutor.execute(ast.body, context, output)
     }
 
     /**

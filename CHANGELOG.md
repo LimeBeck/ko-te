@@ -1,8 +1,27 @@
 # Changelog
 
+## Unreleased
+
+- Render complete conditional branches and loop bodies in source order using a shared text
+  buffer, including nested blocks and imports. Empty block bodies are now accepted.
+- Provide `loop.index`, `number`, `first`, `last` and `length`. Item and metadata bindings
+  are restored after iteration, exceptions and cancellation; other assignments still persist.
+- Recognize imports consistently when checking whether a block body can continue.
+
+### Compatibility
+
+- Text and expression results inside loops now appear in the output. Conditions emit all
+  selected branch results, rather than only the last one. Review templates that intentionally
+  relied on discarded output; assignments remain silent.
+- The loop item name `loop` is reserved for metadata; rename such items when upgrading.
+  An existing outer variable named `loop` is restored when the loop finishes.
+- Public renderer and evaluator signatures are retained. Low-level conditional and iterable
+  evaluators now return a StringWrapper containing their full output (including an empty
+  string for empty output), rather than the last value or Nothing respectively.
+
 ## 0.3.0
 
-Release preparation; publication is pending.
+Available from Maven Central and GitHub Packages.
 
 ### Changes
 
