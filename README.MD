@@ -15,8 +15,8 @@ repositories { mavenCentral() }
 implementation("dev.limebeck:ko-te:0.3.0")
 ```
 
-`0.3.0` is available from Maven Central. This checkout builds `0.4.0`; its block-output
-changes are not yet published and require building locally. See [CHANGELOG.md](CHANGELOG.md)
+`0.3.0` is available from Maven Central. This checkout builds `0.5.0`; its block-output and null/missing-value
+changes require building locally until the corresponding releases are published. See [CHANGELOG.md](CHANGELOG.md)
 for migration notes.
 
 ## Example
@@ -103,7 +103,14 @@ have their host language's floating-point precision; the engine cannot restore l
 
 Data can contain strings, booleans, supported numeric values, lists, string-keyed maps,
 `RuntimeObject` values and null. Nulls retain their list positions; top-level null is accepted.
-Null renders as `null`. The literal keyword `null` is reserved but is not yet an expression.
+Null renders as `null`. The `null` literal works in expressions, assignments and function
+arguments. `null == null` is true; null does not equal a string, number or Boolean.
+
+Access is strict: absent variables, missing object fields and out-of-range list indices throw
+`KoteRuntimeException`. An explicit null field or list element remains a value. Accessing a
+field/index of null also fails; null is not implicitly converted to Boolean or another type.
+Supply optional fields as null in the input data, then guard their use with `if (value == null)`.
+See [null and missing-value semantics](docs/NULL_VALUES.md) for migration from 0.4.0.
 
 Single- and double-quoted strings support `\\`, `\"`, `\'`, `\/`, `\n`, `\r`, `\t`, `\b`,
 `\f` and `\uXXXX`. Triple-double-quoted strings are raw and can span multiple lines.

@@ -3,7 +3,9 @@ package dev.limebeck.templateEngine.runtime
 interface RuntimeContext {
     val resourceLoader: ResourceLoader
     val renderer: Renderer
+    /** Returns an existing value (including [RuntimeObject.Null]); absent names throw. */
     fun get(key: String): RuntimeObject
+    /** Kotlin null removes a binding; [RuntimeObject.Null] stores an explicit null value. */
     fun set(key: String, obj: RuntimeObject?)
 }
 

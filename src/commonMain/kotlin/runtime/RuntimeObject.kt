@@ -5,7 +5,7 @@ sealed interface RuntimeObject {
         val block: (args: List<RuntimeObject>, context: RuntimeContext) -> RuntimeObject
     ) : RuntimeObject {
         companion object {
-            fun from(block: (args: List<RuntimeObject>, context: RuntimeContext) -> Any): CallableWrapper {
+            fun from(block: (args: List<RuntimeObject>, context: RuntimeContext) -> Any?): CallableWrapper {
                 return CallableWrapper { args: List<RuntimeObject>, context: RuntimeContext ->
                     block(args, context).wrap()
                 }

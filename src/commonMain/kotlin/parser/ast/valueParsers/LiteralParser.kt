@@ -8,30 +8,27 @@ import dev.limebeck.templateEngine.parser.ast.throwErrorOnValue
 
 object LiteralParser : AstLexemeParser<AstLexeme.Expression> {
     override fun canParse(stream: RewindableInputStream<LanguageToken>): Boolean {
-        return stream.hasNext() && (
-                stream.peek() is LanguageToken.NumericValue
-                        || stream.peek() is LanguageToken.StringValue
-                        || (stream.peek() is LanguageToken.Keyword
-                        && (stream.peek() as LanguageToken.Keyword).name.lowercase() in listOf("true", "false")
-                        )
-                )
+        if (!stream.hasNext()) return false
+        return when (val token = stream.peek()) {
+            is LanguageToken.NumericValue, is LanguageToken.StringValue -> true
+            is LanguageToken.Keyword -> token.name.lowercase() in setOf("true", "false", "null")
+            else -> false
+        }
     }
 
     override fun parse(stream: RewindableInputStream<LanguageToken>): AstLexeme.Expression {
-        if (!canParse(stream)) {
-            stream.throwErrorOnValue("literal identifier")
-        }
-        return when (val next = stream.peek()) {
-            is LanguageToken.StringValue -> AstLexeme.String(stream.currentPosition.copy(), next.value)
-            is LanguageToken.NumericValue -> AstLexeme.Number(stream.currentPosition.copy(), next.value)
-            is LanguageToken.Keyword -> {
-                when (next.name.lowercase()) {
-                    "true" -> AstLexeme.Boolean(stream.currentPosition.copy(), true)
-                    "false" -> AstLexeme.Boolean(stream.currentPosition.copy(), false)
-                    else -> stream.throwErrorOnValue("boolean value")
-                }
+        if (!canParse(stream)) stream.throwErrorOnValue("literal")
+        val position = stream.currentPosition.copy()
+        return when (val token = stream.peek()) {
+            is LanguageToken.StringValue -> AstLexeme.String(position, token.value)
+            is LanguageToken.NumericValue -> AstLexeme.Number(position, token.value)
+            is LanguageToken.Keyword -> when (token.name.lowercase()) {
+                "true" -> AstLexeme.Boolean(position, true)
+                "false" -> AstLexeme.Boolean(position, false)
+                "null" -> AstLexeme.Null(token.startPosition.copy())
+                else -> stream.throwErrorOnValue("literal")
             }
-            else -> TODO()
+            else -> stream.throwErrorOnValue("literal")
         }
     }
 }
