@@ -15,7 +15,7 @@ repositories { mavenCentral() }
 implementation("dev.limebeck:ko-te:0.3.0")
 ```
 
-`0.3.0` is available from Maven Central. This checkout builds `0.4.0-SNAPSHOT`; its block-output
+`0.3.0` is available from Maven Central. This checkout builds `0.4.0`; its block-output
 changes are not yet published and require building locally. See [CHANGELOG.md](CHANGELOG.md)
 for migration notes.
 
@@ -131,8 +131,7 @@ Use JDK 21 to build and test. The published JVM library requires Java 11 or newe
 Gradle 9.7.0 and Kotlin 2.4.20 are pinned in the build.
 
 Update the default library version for each new change set: use the next patch version for
-fixes and the next minor version for features or pre-1.0 behavior changes. Keep the
-`-SNAPSHOT` suffix during development and remove it when preparing the stable release.
+fixes and the next minor version for features or pre-1.0 behavior changes. Use the final version directly, without a `-SNAPSHOT` suffix.
 
 See [ROADMAP.md](ROADMAP.md) for planned milestones and their acceptance criteria.
 
