@@ -37,15 +37,7 @@ object ConditionalBlockParser : AstLexemeParser<AstLexeme> {
             stream.throwErrorOnValue("punctuation ')'")
         stream.next()
 
-        val thenValue = mutableListOf<AstLexeme>(CoreAstParser.parse(stream))
-
-        stream.next()
-
-        while (stream.hasNext() && CoreAstParser.canParse(stream)) {
-            thenValue.add(CoreAstParser.parse(stream))
-            if(stream.hasNext())
-                stream.next()
-        }
+        val thenValue = stream.parseBlockBody()
 
         if (stream.hasNext()) {
             val possibleElseOrEndif = stream.peek()
@@ -55,15 +47,8 @@ object ConditionalBlockParser : AstLexemeParser<AstLexeme> {
             if (possibleElseOrEndif.name == "else") {
                 stream.next()
 
-                val elseValue = mutableListOf<AstLexeme>(CoreAstParser.parse(stream))
-
-                stream.next()
-
-                while (stream.hasNext() && CoreAstParser.canParse(stream)) {
-                    elseValue.add(CoreAstParser.parse(stream))
-                    if(stream.hasNext())
-                        stream.next()
-                }
+                val elseValue = stream.parseBlockBody()
+                if (!stream.hasNext()) stream.throwErrorOnValue("endif")
 
                 val possibleEndif = stream.peek()
                 if (possibleEndif !is LanguageToken.Keyword || possibleEndif.name != "endif") {

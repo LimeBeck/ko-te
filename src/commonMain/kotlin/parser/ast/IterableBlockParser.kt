@@ -39,15 +39,7 @@ object IterableBlockParser : AstLexemeParser<AstLexeme> {
 
         stream.next()
 
-        val body = mutableListOf<AstLexeme>(CoreAstParser.parse(stream))
-
-        stream.next()
-
-        while (stream.hasNext() && CoreAstParser.canParse(stream)) {
-            body.add(CoreAstParser.parse(stream))
-            if(stream.hasNext())
-                stream.next()
-        }
+        val body = stream.parseBlockBody()
 
         if (stream.hasNext()) {
             val possibleEndfor = stream.peek()

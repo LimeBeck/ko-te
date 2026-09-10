@@ -15,8 +15,9 @@ repositories { mavenCentral() }
 implementation("dev.limebeck:ko-te:0.3.0")
 ```
 
-`0.3.0` is the release prepared by this checkout; repository availability depends on completion
-of publication. See [CHANGELOG.md](CHANGELOG.md) for changes and migration notes from `0.2.5`.
+`0.3.0` is available from Maven Central. This checkout builds `0.4.0`; its block-output
+changes are not yet published and require building locally. See [CHANGELOG.md](CHANGELOG.md)
+for migration notes.
 
 ## Example
 
@@ -58,9 +59,32 @@ there is no implicit standard function set. Imports use the supplied `ResourceLo
 share the current render's variables. Import cycles and depth greater than 64 are rejected.
 Each top-level render has its own context and import stack.
 
-The existing `for item in items ... endfor` construct executes assignments and host calls;
-it intentionally discards the body's output. It currently accepts a variable as its iterable,
-not an arbitrary expression. Pipe syntax and template inheritance are not implemented.
+Pipe syntax and template inheritance are not implemented.
+
+## Blocks (unreleased)
+
+Conditions emit every node of the selected branch, in source order. Loops emit their body
+once per item, and imports emit the imported template at the import position. Assignments
+emit no text. Empty bodies and loops over empty lists produce no output.
+
+```text
+{{ for item in items }}[{{ loop.number }}: {{ item }}]{{ endfor }}
+```
+
+For `items = listOf("a", "b")`, the result is `[1: a][2: b]`.
+The iterable must still be a variable containing a list; it is read once before iteration.
+Each iteration provides `loop.index` (zero-based), `loop.number` (one-based), `loop.first`,
+`loop.last` and `loop.length`. The name `loop` cannot be used as the item variable.
+
+Nested loops temporarily shadow the outer item and loop metadata. These bindings are restored
+after the loop, including when evaluation throws or is cancelled. Other assignments retain
+their existing shared-context behavior, including assignments made by imported templates.
+Values inside blocks retain their usual formatting: lists and maps are JSON, while the
+combined block output is plain text. No additional HTML escaping is applied.
+
+In **0.3.0**, loops discard their body output and conditions return only the last result of
+the selected branch. The new behavior is an intentional compatibility change. See the
+[block specification](docs/BLOCKS.md) for examples and compatibility details.
 
 ## Expressions and values
 
@@ -105,6 +129,9 @@ permissions of the application. Compilation caching and a compile/render API are
 
 Use JDK 21 to build and test. The published JVM library requires Java 11 or newer.
 Gradle 9.7.0 and Kotlin 2.4.20 are pinned in the build.
+
+Update the default library version for each new change set: use the next patch version for
+fixes and the next minor version for features or pre-1.0 behavior changes. Use the final version directly, without a `-SNAPSHOT` suffix.
 
 See [ROADMAP.md](ROADMAP.md) for planned milestones and their acceptance criteria.
 

@@ -7,6 +7,7 @@ import dev.limebeck.templateEngine.parser.ast.valueParsers.ImportParser
 
 object CoreAstParser : AstLexemeParser<AstLexeme> {
     private val parsers = listOf(
+        ImportParser,
         ConditionalBlockParser,
         IterableBlockParser,
         VariableAssignParser,
@@ -21,26 +22,10 @@ object CoreAstParser : AstLexemeParser<AstLexeme> {
 
     override fun parse(stream: RewindableInputStream<LanguageToken>): AstLexeme {
         val nextToken = stream.peek()
-        return when {
-            nextToken is LanguageToken.TemplateSource -> {
-                AstLexeme.TemplateSource(stream.currentPosition.copy(), nextToken.text)
-            }
-            ImportParser.canParse(stream) -> {
-                ImportParser.parse(stream)
-            }
-            ConditionalBlockParser.canParse(stream) -> {
-                ConditionalBlockParser.parse(stream)
-            }
-            IterableBlockParser.canParse(stream) -> {
-                IterableBlockParser.parse(stream)
-            }
-            VariableAssignParser.canParse(stream) -> {
-                VariableAssignParser.parse(stream)
-            }
-            ExpressionParser.canParse(stream) -> {
-                ExpressionParser.parse(stream)
-            }
-            else -> stream.throwErrorOnValue("language construction")
+        if (nextToken is LanguageToken.TemplateSource) {
+            return AstLexeme.TemplateSource(stream.currentPosition.copy(), nextToken.text)
         }
+        return parsers.firstOrNull { it.canParse(stream) }?.parse(stream)
+            ?: stream.throwErrorOnValue("language construction")
     }
 }
