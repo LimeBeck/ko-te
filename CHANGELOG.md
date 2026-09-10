@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.4.0-SNAPSHOT (unreleased)
 
 - Render complete conditional branches and loop bodies in source order using a shared text
   buffer, including nested blocks and imports. Empty block bodies are now accepted.
