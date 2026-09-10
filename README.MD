@@ -15,7 +15,7 @@ repositories { mavenCentral() }
 implementation("dev.limebeck:ko-te:0.3.0")
 ```
 
-`0.3.0` is available from Maven Central. This checkout builds `0.5.0`; its block-output and null/missing-value
+`0.3.0` is available from Maven Central. This checkout builds `0.6.0`; its block-output, null/missing-value and unary-operator
 changes require building locally until the corresponding releases are published. See [CHANGELOG.md](CHANGELOG.md)
 for migration notes.
 
@@ -88,10 +88,11 @@ the selected branch. The new behavior is an intentional compatibility change. Se
 
 ## Expressions and values
 
-Operators are left-associative. From highest to lowest precedence: `* / %`, `+ -`, `==`.
+From highest to lowest precedence: calls/field/index access, unary `+ - !`, `* / %`,
+binary `+ -`, `==`. Binary operators are left-associative; prefixes nest right-to-left.
 Parentheses override precedence, including in function arguments. Division of integral values
-truncates toward zero. There are no unary operators; negative values can be supplied as data
-or computed with subtraction.
+truncates toward zero. Unary `+` and `-` require numbers; `!` requires a Boolean.
+See [unary operators](docs/UNARY_OPERATORS.md) for examples and numeric boundaries.
 
 Numeric operations use checked Long arithmetic for integral values in the Long range and
 Double arithmetic for fractional values. This includes integral-valued Float/Double input

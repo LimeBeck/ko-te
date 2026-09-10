@@ -16,6 +16,7 @@ object CoreEvaluator : Evaluator<AstLexeme, RuntimeObject> {
             is AstLexeme.IndexAccess -> IndexAccessEvaluator.eval(lexeme, context)
             is AstLexeme.Primitive -> ValueAccessEvaluator.eval(lexeme, context)
             is AstLexeme.Conditional -> ConditionalEvaluator.eval(lexeme, context)
+            is AstLexeme.PrefixOperation -> UnaryOperationEvaluator.eval(lexeme, context)
             is AstLexeme.InfixOperation -> OperationEvaluator.eval(lexeme, context)
             is AstLexeme.Import -> ImportEvaluator.eval(lexeme, context)
             is AstLexeme.Iterator -> IterableEvaluator.eval(lexeme, context)

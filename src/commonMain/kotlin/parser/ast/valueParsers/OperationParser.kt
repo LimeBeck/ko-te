@@ -6,9 +6,13 @@ import dev.limebeck.templateEngine.parser.ast.*
 
 object OperationParser : AstLexemeValueParser {
     private fun readOperation(stream: RewindableInputStream<LanguageToken>): Operation? {
-        val symbols = stream.readUntil { it is LanguageToken.Operation }
-            .joinToString("") { (it as LanguageToken.Operation).operation }
-        return Operation.find(symbols)
+        val first = (if (stream.hasNext()) stream.peek() else null) as? LanguageToken.Operation ?: return null
+        stream.next()
+        if (first.operation != "=") return Operation.find(first.operation)
+        val second = (if (stream.hasNext()) stream.peek() else null) as? LanguageToken.Operation
+        if (second?.operation != "=") return null
+        stream.next()
+        return Operation.EQUALS
     }
 
     internal fun peekOperation(stream: RewindableInputStream<LanguageToken>): Operation? =
