@@ -19,6 +19,7 @@ object OperationEvaluator : Evaluator<AstLexeme.InfixOperation, RuntimeObject> {
         val right = CoreEvaluator.eval(lexeme.right, context).result
         val result = when {
             lexeme.operation == Operation.EQUALS -> RuntimeObject.BooleanWrapper(when {
+                left === RuntimeObject.Null && right === RuntimeObject.Null -> true
                 left is RuntimeObject.NumberWrapper && right is RuntimeObject.NumberWrapper ->
                     numbersEqual(left.number, right.number)
                 left is RuntimeObject.StringWrapper && right is RuntimeObject.StringWrapper -> left.string == right.string

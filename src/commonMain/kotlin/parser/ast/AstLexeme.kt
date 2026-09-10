@@ -9,6 +9,10 @@ sealed interface AstLexeme {
     sealed interface Expression : AstLexeme
     sealed interface WritableExpression : Expression
 
+    data class Null(
+        override val streamPosition: InputStream.Position
+    ) : Expression, Primitive
+
     data class TemplateSource(
         override val streamPosition: InputStream.Position,
         val text: kotlin.String

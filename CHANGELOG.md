@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.5.0
+
+- Add the null literal in expressions, assignments and function arguments. Explicit null
+  values now compare equal; null remains distinct from all other value types.
+- Reject missing object fields and out-of-range indices with KoteRuntimeException, matching
+  missing variable lookup. Explicit null fields/elements remain valid. This changes the
+  previous behavior that silently substituted null for missing fields/indices.
+- Allow nullable return values in CallableWrapper.from. Host RuntimeContext.set(key, null)
+  still removes a binding; use RuntimeObject.Null to store null explicitly.
+- Add AstLexeme.Null; exhaustive visitors over primitive AST nodes must handle it.
+
+Migration: provide expected optional fields explicitly as null or normalize input data before
+rendering. Comparing missing data with null now fails instead of hiding the missing access.
+See [the null specification](docs/NULL_VALUES.md).
+
 ## 0.4.0
 
 - Render complete conditional branches and loop bodies in source order using a shared text
