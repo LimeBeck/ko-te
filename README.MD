@@ -12,12 +12,13 @@ Use Maven Central and the root multiplatform artifact:
 ```kotlin
 repositories { mavenCentral() }
 // In commonMain.dependencies (or dependencies for a JVM project):
-implementation("dev.limebeck:ko-te:0.3.0")
+implementation("dev.limebeck:ko-te:0.6.0")
 ```
 
-`0.3.0` is available from Maven Central. This checkout builds `0.6.0`; its block-output, null/missing-value and unary-operator
-changes require building locally until the corresponding releases are published. See [CHANGELOG.md](CHANGELOG.md)
-for migration notes.
+The latest release is [0.6.0](https://github.com/LimeBeck/ko-te/releases/tag/v0.6.0).
+Its signed artifacts have been uploaded to Central Portal and published to GitHub Packages.
+Maven Central availability is pending Portal publication and propagation; the dependency above
+will resolve once that completes. See [CHANGELOG.md](CHANGELOG.md) for migration notes.
 
 ## Example
 
@@ -61,7 +62,7 @@ Each top-level render has its own context and import stack.
 
 Pipe syntax and template inheritance are not implemented.
 
-## Blocks (unreleased)
+## Blocks
 
 Conditions emit every node of the selected branch, in source order. Loops emit their body
 once per item, and imports emit the imported template at the import position. Assignments
@@ -82,9 +83,9 @@ their existing shared-context behavior, including assignments made by imported t
 Values inside blocks retain their usual formatting: lists and maps are JSON, while the
 combined block output is plain text. No additional HTML escaping is applied.
 
-In **0.3.0**, loops discard their body output and conditions return only the last result of
-the selected branch. The new behavior is an intentional compatibility change. See the
-[block specification](docs/BLOCKS.md) for examples and compatibility details.
+Since **0.4.0**, blocks render their complete output. In **0.3.0**, loops discarded their
+body output and conditions returned only the last result of the selected branch. This is an
+intentional compatibility change. See the [block specification](docs/BLOCKS.md) for examples and compatibility details.
 
 ## Expressions and values
 
@@ -92,7 +93,8 @@ From highest to lowest precedence: calls/field/index access, unary `+ - !`, `* /
 binary `+ -`, `==`. Binary operators are left-associative; prefixes nest right-to-left.
 Parentheses override precedence, including in function arguments. Division of integral values
 truncates toward zero. Unary `+` and `-` require numbers; `!` requires a Boolean.
-See [unary operators](docs/UNARY_OPERATORS.md) for examples and numeric boundaries.
+Unary operators are available since **0.6.0**. See [unary operators](docs/UNARY_OPERATORS.md)
+for examples and numeric boundaries.
 
 Numeric operations use checked Long arithmetic for integral values in the Long range and
 Double arithmetic for fractional values. This includes integral-valued Float/Double input
@@ -104,8 +106,8 @@ have their host language's floating-point precision; the engine cannot restore l
 
 Data can contain strings, booleans, supported numeric values, lists, string-keyed maps,
 `RuntimeObject` values and null. Nulls retain their list positions; top-level null is accepted.
-Null renders as `null`. The `null` literal works in expressions, assignments and function
-arguments. `null == null` is true; null does not equal a string, number or Boolean.
+Null renders as `null`. Since **0.5.0**, the `null` literal works in expressions, assignments
+and function arguments. `null == null` is true; null does not equal a string, number or Boolean.
 
 Access is strict: absent variables, missing object fields and out-of-range list indices throw
 `KoteRuntimeException`. An explicit null field or list element remains a value. Accessing a
