@@ -68,6 +68,12 @@ sealed interface AstLexeme {
         val index: Int
     ) : WritableExpression
 
+    data class PrefixOperation(
+        override val streamPosition: InputStream.Position,
+        val operand: Expression,
+        val operation: UnaryOperation
+    ) : Expression
+
     data class InfixOperation(
         override val streamPosition: InputStream.Position,
         val left: AstLexeme,
@@ -116,5 +122,13 @@ enum class Operation(
 
     companion object {
         fun find(value: String) = Operation.values().find { it.stringValue == value }
+    }
+}
+
+enum class UnaryOperation(val symbol: String) {
+    PLUS("+"), MINUS("-"), NOT("!");
+
+    companion object {
+        fun find(symbol: String): UnaryOperation? = entries.find { it.symbol == symbol }
     }
 }

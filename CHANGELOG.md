@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.0
+
+- Add unary `+`, `-` and `!`, including nested prefixes and adjacent binary/prefix
+  operators such as `1--2`. Calls, fields and indices bind more tightly than prefixes.
+- Require Number operands for signs and Boolean operands for negation, without coercion.
+  Numeric operations retain checked overflow and non-finite-value rejection.
+- Add AstLexeme.PrefixOperation and UnaryOperation. Exhaustive expression visitors must
+  handle the new node. See [unary operators](docs/UNARY_OPERATORS.md).
+
 ## 0.5.0
 
 - Add the null literal in expressions, assignments and function arguments. Explicit null
