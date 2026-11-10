@@ -10,6 +10,7 @@ object CoreAstParser : AstLexemeParser<AstLexeme> {
         ImportParser,
         ConditionalBlockParser,
         IterableBlockParser,
+        FunctionDeclarationParser,
         VariableAssignParser,
         ExpressionParser
     )

@@ -41,6 +41,13 @@ sealed interface AstLexeme {
         val args: List<FunctionArgument>
     ) : Expression
 
+    data class FunctionDeclaration(
+        override val streamPosition: InputStream.Position,
+        val name: kotlin.String,
+        val parameters: List<kotlin.String>,
+        val body: List<AstLexeme>
+    ) : AstLexeme
+
     data class FunctionArgument(
         override val streamPosition: InputStream.Position,
         val name: kotlin.String?,

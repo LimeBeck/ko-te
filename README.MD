@@ -91,6 +91,16 @@ Since **0.4.0**, blocks render their complete output. In **0.3.0**, loops discar
 body output and conditions returned only the last result of the selected branch. This is an
 intentional compatibility change. See the [block specification](docs/BLOCKS.md) for examples and compatibility details.
 
+## Template functions
+
+```text
+{{ fun greet(name) }}Hello, {{ name }}!{{ endfun }}{{ greet("Ada") }}
+```
+
+The declaration emits no text. A call renders the body and returns its text. Parameters and
+assignments live in the call's local scope, with reads falling back to the declaration's scope.
+Calls can use positional or named arguments. `fun` and `endfun` are reserved keywords.
+
 ## Expressions and values
 
 From highest to lowest precedence: calls/field/index access, unary `+ - !`, `* / %`,

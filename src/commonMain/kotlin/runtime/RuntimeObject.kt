@@ -1,5 +1,7 @@
 package dev.limebeck.templateEngine.runtime
 
+import dev.limebeck.templateEngine.parser.ast.AstLexeme
+
 sealed interface RuntimeObject {
     class CallableWrapper private constructor(
         internal val parameterNames: List<String>?,
@@ -26,6 +28,11 @@ sealed interface RuntimeObject {
             }
         }
     }
+
+    class TemplateFunction internal constructor(
+        internal val declaration: AstLexeme.FunctionDeclaration,
+        internal val closure: RuntimeContext
+    ) : RuntimeObject
 
     object Null : RuntimeObject
     object Nothing : RuntimeObject

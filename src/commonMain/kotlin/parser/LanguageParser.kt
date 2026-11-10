@@ -15,7 +15,9 @@ data class LanguageError(
 
 class MustacheLikeLanguageParser : LanguageParser {
     companion object {
-        val KEYWORDS = listOf("if", "else", "endif", "for", "in", "endfor", "true", "false", "null", "let", "import")
+        val KEYWORDS = listOf(
+            "if", "else", "endif", "for", "in", "endfor", "true", "false", "null", "let", "import", "fun", "endfun"
+        )
         val PUNCTUATION = ",.;[]{}()".toList()
         val OPERATIONS = "+-*/%!<>=&".toList()
         val ALLOWED_STRING_DEFINITIONS = listOf("\"", "\"\"\"", "'")

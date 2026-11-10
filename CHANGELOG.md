@@ -10,6 +10,9 @@
 - Support named arguments for callables that declare parameter names.
 - Allow runtime evaluators to consume an AST stream one node at a time.
 - Support child runtime scopes with inherited lookup and local assignments.
+- Declare template functions with `fun` and `endfun`. Calls render the body in a fresh
+  scope rooted in the declaration context. Exhaustive visitors should handle
+  `AstLexeme.FunctionDeclaration` and `RuntimeObject.TemplateFunction`.
 
 ## 0.6.1
 

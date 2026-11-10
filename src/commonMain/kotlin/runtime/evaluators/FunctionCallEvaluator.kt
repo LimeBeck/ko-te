@@ -1,9 +1,11 @@
 package dev.limebeck.templateEngine.runtime.evaluators
 
 import dev.limebeck.templateEngine.parser.ast.AstLexeme
+import dev.limebeck.templateEngine.runtime.BlockExecutor
 import dev.limebeck.templateEngine.runtime.RuntimeContext
 import dev.limebeck.templateEngine.runtime.KoteRuntimeException
 import dev.limebeck.templateEngine.runtime.RuntimeObject
+import dev.limebeck.templateEngine.runtime.childScope
 
 object FunctionCallEvaluator : Evaluator<AstLexeme.FunctionCall, RuntimeObject> {
     override suspend fun eval(lexeme: AstLexeme.FunctionCall, context: RuntimeContext): EvalResult<RuntimeObject> {
@@ -11,10 +13,23 @@ object FunctionCallEvaluator : Evaluator<AstLexeme.FunctionCall, RuntimeObject> 
             is AstLexeme.Variable -> context.get(lexeme.identifier.name)
             else -> CoreEvaluator.eval(lexeme.identifier, context).result
         }
-        if (possibleFunction !is RuntimeObject.CallableWrapper)
-            throw KoteRuntimeException("<95ee753e> $lexeme is not a callable")
-        val args = evaluateArguments(lexeme.args, possibleFunction.parameterNames, context)
-        return EvalResult(possibleFunction.block(args, context))
+        val result = when (possibleFunction) {
+            is RuntimeObject.CallableWrapper -> {
+                val args = evaluateArguments(lexeme.args, possibleFunction.parameterNames, context)
+                possibleFunction.block(args, context)
+            }
+            is RuntimeObject.TemplateFunction -> {
+                val parameters = possibleFunction.declaration.parameters
+                val args = evaluateArguments(lexeme.args, parameters, context)
+                val scope = possibleFunction.closure.childScope()
+                for ((index, name) in parameters.withIndex()) {
+                    scope.set(name, args[index])
+                }
+                RuntimeObject.StringWrapper(BlockExecutor.render(possibleFunction.declaration.body, scope))
+            }
+            else -> throw KoteRuntimeException("<95ee753e> $lexeme is not a callable")
+        }
+        return EvalResult(result)
     }
 
     private suspend fun evaluateArguments(

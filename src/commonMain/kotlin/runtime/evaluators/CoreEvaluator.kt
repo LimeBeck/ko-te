@@ -14,6 +14,10 @@ object CoreEvaluator : Evaluator<AstLexeme, RuntimeObject> {
                 is AstLexeme.Variable -> VariableAccessEvaluator.eval(lexeme, context)
                 is AstLexeme.Assign -> AssignEvaluator.eval(lexeme, context)
                 is AstLexeme.FunctionCall -> FunctionCallEvaluator.eval(lexeme, context)
+                is AstLexeme.FunctionDeclaration -> {
+                    context.set(lexeme.name, RuntimeObject.TemplateFunction(lexeme, context))
+                    EvalResult(RuntimeObject.Nothing)
+                }
                 is AstLexeme.KeyAccess -> KeyAccessEvaluator.eval(lexeme, context)
                 is AstLexeme.IndexAccess -> IndexAccessEvaluator.eval(lexeme, context)
                 is AstLexeme.Primitive -> ValueAccessEvaluator.eval(lexeme, context)
