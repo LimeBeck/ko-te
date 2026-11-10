@@ -10,7 +10,7 @@ interface LanguageParser {
 data class LanguageError(
     override val message: String,
     override val position: InputStream.Position,
-    override val sourceFile: SourceFile? = null
+    override val sourceFile: SourceFile? = position.sourceFile
 ) : ParserError, Throwable(message)
 
 class MustacheLikeLanguageParser : LanguageParser {
@@ -25,7 +25,7 @@ class MustacheLikeLanguageParser : LanguageParser {
     private fun Char.isOperation(): Boolean = this in OPERATIONS
     private fun Char.isStringDef(): Boolean = this in listOf('"', '\'')
 
-    private fun parseLanguageToken(token: TemplateToken.LanguagePart): Sequence<LanguageToken> {
+    private fun parseLanguageToken(token: TemplateToken.LanguagePart, file: SourceFile?): Sequence<LanguageToken> {
         val stream = token.text.toStream()
 
         stream.skipEmpty()
@@ -34,11 +34,11 @@ class MustacheLikeLanguageParser : LanguageParser {
             while (stream.hasNext()) {
                 val local = stream.currentPosition
                 val base = token.startPosition as? CharInputStream.StringPosition
-                val position = if (base == null) token.startPosition else CharInputStream.StringPosition(
-                    base.absolutePosition + local.absolutePosition,
-                    base.line + local.line - 1,
-                    if (local.line == 1) base.column + local.column else local.column
-                )
+                val position = (base?.copy(
+                    absolutePosition = base.absolutePosition + local.absolutePosition,
+                    line = base.line + local.line - 1,
+                    column = if (local.line == 1) base.column + local.column else local.column
+                ) ?: token.startPosition).withFile(file)
                 val nextChar = stream.peek()
                 when {
                     nextChar.isOperation() -> {
@@ -124,12 +124,12 @@ class MustacheLikeLanguageParser : LanguageParser {
                         is TemplateToken.TemplateSource -> yield(
                             LanguageToken.TemplateSource(
                                 token.text,
-                                startPosition = token.startPosition
+                                startPosition = token.startPosition.withFile(context.file)
                             )
                         )
                         is TemplateToken.LanguagePart -> {
-                            yieldAll(parseLanguageToken(token))
-                            yield(LanguageToken.Punctuation(LANGUAGE_PART_END, token.endPosition))
+                            yieldAll(parseLanguageToken(token, context.file))
+                            yield(LanguageToken.Punctuation(LANGUAGE_PART_END, token.endPosition.withFile(context.file)))
                         }
                     }
                 }

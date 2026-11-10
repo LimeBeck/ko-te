@@ -30,9 +30,9 @@ object FunctionCallParser : ComplexParser {
         val arguments = mutableListOf<AstLexeme.FunctionArgument>()
         if ((stream.peekOrNull() as? LanguageToken.Punctuation)?.value != ")") {
             while (true) {
-                val position = stream.currentPosition.copy()
+                val position = stream.peekOrNull()?.startPosition ?: stream.currentPosition
                 val value = ExpressionParser.parse(stream)
-                arguments.add(AstLexeme.FunctionArgument(position, null, value))
+                arguments.add(AstLexeme.FunctionArgument(position.copy(), null, value))
                 stream.next()
                 val separator = (stream.peekOrNull() as? LanguageToken.Punctuation)?.value
                 if (separator == ")") break
@@ -41,7 +41,7 @@ object FunctionCallParser : ComplexParser {
             }
         }
         if ((stream.peekOrNull() as? LanguageToken.Punctuation)?.value != ")") stream.throwErrorOnValue("')'")
-        return AstLexeme.FunctionCall(stream.currentPosition.copy(), prevExpression, arguments)
+        return AstLexeme.FunctionCall(prevExpression.streamPosition.copy(), prevExpression, arguments)
     }
 
     override fun parse(stream: RewindableInputStream<LanguageToken>): AstLexeme.FunctionCall {

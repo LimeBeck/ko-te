@@ -2,12 +2,13 @@ package dev.limebeck.templateEngine.parser
 
 import dev.limebeck.templateEngine.SourceFile
 import dev.limebeck.templateEngine.inputStream.InputStream
+import dev.limebeck.templateEngine.inputStream.withFile
 
 interface ParserError {
     val message: String
     val position: InputStream.Position
     val sourceFile: SourceFile?
-        get() = null
+        get() = position.sourceFile
 }
 
 internal inline fun <T> withSourceFile(file: SourceFile?, block: () -> T): T {
@@ -16,8 +17,10 @@ internal inline fun <T> withSourceFile(file: SourceFile?, block: () -> T): T {
     try {
         return block()
     } catch (error: LexerError) {
-        throw if (error.sourceFile == null) error.copy(sourceFile = file) else error
+        throw if (error.sourceFile == null) error.copy(position = error.position.withFile(file), sourceFile = file)
+        else error
     } catch (error: LanguageError) {
-        throw if (error.sourceFile == null) error.copy(sourceFile = file) else error
+        throw if (error.sourceFile == null) error.copy(position = error.position.withFile(file), sourceFile = file)
+        else error
     }
 }

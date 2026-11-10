@@ -18,14 +18,15 @@ object LiteralParser : AstLexemeParser<AstLexeme.Expression> {
 
     override fun parse(stream: RewindableInputStream<LanguageToken>): AstLexeme.Expression {
         if (!canParse(stream)) stream.throwErrorOnValue("literal")
-        val position = stream.currentPosition.copy()
-        return when (val token = stream.peek()) {
+        val token = stream.peek()
+        val position = token.startPosition.copy()
+        return when (token) {
             is LanguageToken.StringValue -> AstLexeme.String(position, token.value)
             is LanguageToken.NumericValue -> AstLexeme.Number(position, token.value)
             is LanguageToken.Keyword -> when (token.name.lowercase()) {
                 "true" -> AstLexeme.Boolean(position, true)
                 "false" -> AstLexeme.Boolean(position, false)
-                "null" -> AstLexeme.Null(token.startPosition.copy())
+                "null" -> AstLexeme.Null(position)
                 else -> stream.throwErrorOnValue("literal")
             }
             else -> stream.throwErrorOnValue("literal")

@@ -10,7 +10,7 @@ interface TemplateTokenizer {
 data class LexerError(
     override val position: InputStream.Position,
     override val message: String,
-    override val sourceFile: SourceFile? = null
+    override val sourceFile: SourceFile? = position.sourceFile
 ) : ParserError, Throwable(message)
 
 
@@ -25,10 +25,10 @@ class MustacheLikeTemplateTokenizer(
     private val delimiterStart = delimiterStartSymbol.toList()
     private val delimiterEnd = delimiterEndSymbol.toList()
 
-    private fun RewindableInputStream<Char>.readLanguageParts(): List<TemplateToken.LanguagePart> {
+    private fun RewindableInputStream<Char>.readLanguageParts(file: SourceFile?): List<TemplateToken.LanguagePart> {
         skipNext(delimiterStart)
         skipEmpty()
-        val startPosition = currentPosition.copy()
+        val startPosition = currentPosition.copy().withFile(file)
         val languageConstructions = buildString {
             while (hasNext() && !isNextSequenceEquals(delimiterEnd)) {
                 if (peek() == '"' || peek() == '\'') append(readStringLiteral().source)
@@ -43,13 +43,13 @@ class MustacheLikeTemplateTokenizer(
             TemplateToken.LanguagePart(
                 text = languageConstructions.trimEnd(),
                 startPosition = startPosition,
-                endPosition = currentPosition
+                endPosition = currentPosition.withFile(file)
             )
         )
     }
 
-    private fun RewindableInputStream<Char>.readRawTemplate(): TemplateToken.TemplateSource? {
-        val startPosition = currentPosition.copy()
+    private fun RewindableInputStream<Char>.readRawTemplate(file: SourceFile?): TemplateToken.TemplateSource? {
+        val startPosition = currentPosition.copy().withFile(file)
 
         val rawTemplate = readUntil {
             !isNextSequenceEquals(delimiterStart)
@@ -59,28 +59,26 @@ class MustacheLikeTemplateTokenizer(
             TemplateToken.TemplateSource(
                 text = rawTemplate.joinToString(""),
                 startPosition = startPosition,
-                endPosition = currentPosition
+                endPosition = currentPosition.withFile(file)
             )
         else
             null
     }
 
-    override fun analyze(stream: RewindableInputStream<Char>): List<TemplateToken> {
-        val tokens = mutableListOf<TemplateToken>()
-        while (stream.hasNext()) {
-            stream.readRawTemplate()?.let {
-                tokens.add(it)
-            }
-
-            if (stream.hasNext()) {
-                stream.readLanguageParts().let {
-                    tokens.addAll(it)
-                }
-            }
-        }
-        return tokens
-    }
+    override fun analyze(stream: RewindableInputStream<Char>): List<TemplateToken> = analyze(stream, LexerContext())
 
     fun analyze(stream: RewindableInputStream<Char>, context: LexerContext): List<TemplateToken> =
-        withSourceFile(context.file) { analyze(stream) }
+        withSourceFile(context.file) {
+            val tokens = mutableListOf<TemplateToken>()
+            while (stream.hasNext()) {
+                stream.readRawTemplate(context.file)?.let {
+                    tokens.add(it)
+                }
+
+                if (stream.hasNext()) {
+                    tokens.addAll(stream.readLanguageParts(context.file))
+                }
+            }
+            tokens
+        }
 }

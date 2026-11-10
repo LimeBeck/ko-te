@@ -23,7 +23,7 @@ object CoreAstParser : AstLexemeParser<AstLexeme> {
     override fun parse(stream: RewindableInputStream<LanguageToken>): AstLexeme {
         val nextToken = stream.peek()
         if (nextToken is LanguageToken.TemplateSource) {
-            return AstLexeme.TemplateSource(stream.currentPosition.copy(), nextToken.text)
+            return AstLexeme.TemplateSource(nextToken.startPosition.copy(), nextToken.text)
         }
         return parsers.firstOrNull { it.canParse(stream) }?.parse(stream)
             ?: stream.throwErrorOnValue("language construction")

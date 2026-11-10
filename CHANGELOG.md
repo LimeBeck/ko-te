@@ -5,6 +5,7 @@
 - Classify AST values as `AstLexeme.Literal` and `AstLexeme.Reference`. Primitive
   literals and writable references retain their existing types.
 - Pass lexer and parser contexts containing the file name and path for resource templates.
+- Carry the source file and character position through template tokens, language tokens, and AST nodes.
 
 ## 0.6.1
 

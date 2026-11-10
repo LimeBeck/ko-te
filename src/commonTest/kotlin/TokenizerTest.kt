@@ -1,14 +1,36 @@
+import dev.limebeck.templateEngine.SourceFile
+import dev.limebeck.templateEngine.inputStream.CharInputStream.StringPosition
 import dev.limebeck.templateEngine.inputStream.toStream
 import dev.limebeck.templateEngine.parser.LanguageToken
+import dev.limebeck.templateEngine.parser.LexerContext
 import dev.limebeck.templateEngine.parser.MustacheLikeLanguageParser
 import dev.limebeck.templateEngine.parser.MustacheLikeTemplateTokenizer
 import dev.limebeck.templateEngine.parser.TemplateToken
+import dev.limebeck.templateEngine.parser.ast.AstLexeme
+import dev.limebeck.templateEngine.parser.ast.KoTeAstParser
 import utils.runTest
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
+import kotlin.test.assertTrue
 
 class TokenizerTest {
+    @Test
+    fun tokensAndAstPositionsRetainTheirSourceFile() = runTest {
+        val file = SourceFile("fragments/numbers.kote")
+        val template = "heading\n{{ value +\n 2 }}"
+        val parts = MustacheLikeTemplateTokenizer().analyze(template.toStream(), LexerContext(file))
+        assertTrue(parts.all { it.startPosition.sourceFile == file && it.endPosition.sourceFile == file })
+
+        val tokens = MustacheLikeLanguageParser().parse(parts.asSequence())
+        assertTrue(tokens.all { it.startPosition.sourceFile == file })
+
+        val operation = assertIs<AstLexeme.InfixOperation>(KoTeAstParser().parse(tokens).body.last())
+        assertEquals(StringPosition(template.indexOf('+'), 2, 9, file), operation.streamPosition)
+        assertEquals(StringPosition(template.indexOf('2'), 3, 1, file), operation.right.streamPosition)
+    }
+
     @Test
     fun tokenizeSimpleTemplate() {
         val simpleTextTemplate = """

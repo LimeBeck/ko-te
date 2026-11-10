@@ -18,7 +18,7 @@ object VariableAssignParser : AstLexemeParser<AstLexeme.Assign> {
             stream.throwErrorOnValue("'let' identifier")
         }
 
-        stream.skipNext(1)
+        val position = stream.next().startPosition.copy()
         val variable = IdentifierParser.parse(stream)
         stream.next()
 
@@ -29,7 +29,7 @@ object VariableAssignParser : AstLexemeParser<AstLexeme.Assign> {
         val value = ExpressionParser.parse(stream)
 
         return AstLexeme.Assign(
-            streamPosition = stream.currentPosition.copy(),
+            streamPosition = position,
             left = variable,
             right = value
         )
