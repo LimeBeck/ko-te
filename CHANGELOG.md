@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.0
+
+- Classify AST values as `AstLexeme.Literal` and `AstLexeme.Reference`. Primitive
+  literals and writable references retain their existing types.
+
 ## 0.6.1
 
 - Keep adjacent template blocks separate when parsing expressions and statements.

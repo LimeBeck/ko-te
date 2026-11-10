@@ -5,13 +5,15 @@ import dev.limebeck.templateEngine.inputStream.InputStream
 sealed interface AstLexeme {
     val streamPosition: InputStream.Position
 
-    sealed interface Primitive : AstLexeme
     sealed interface Expression : AstLexeme
-    sealed interface WritableExpression : Expression
+    sealed interface Literal : Expression
+    sealed interface Primitive : Literal
+    sealed interface Reference : Expression
+    sealed interface WritableExpression : Reference
 
     data class Null(
         override val streamPosition: InputStream.Position
-    ) : Expression, Primitive
+    ) : Primitive
 
     data class TemplateSource(
         override val streamPosition: InputStream.Position,
@@ -21,17 +23,17 @@ sealed interface AstLexeme {
     data class Number(
         override val streamPosition: InputStream.Position,
         val value: kotlin.Number
-    ) : Expression, Primitive
+    ) : Primitive
 
     data class String(
         override val streamPosition: InputStream.Position,
         val value: kotlin.String
-    ) : Expression, Primitive
+    ) : Primitive
 
     data class Boolean(
         override val streamPosition: InputStream.Position,
         val value: kotlin.Boolean
-    ) : Expression, Primitive
+    ) : Primitive
 
     data class FunctionCall(
         override val streamPosition: InputStream.Position,

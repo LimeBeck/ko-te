@@ -6,8 +6,30 @@ import utils.runTest
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertIs
 
 class AstParserTest {
+
+    @Test
+    fun distinguishLiteralAndReferenceExpressions() = runTest {
+        val body = ("{{ 'text' }}{{ 42 }}{{ true }}{{ null }}" +
+            "{{ variable }}{{ obj.key }}{{ items[0] }}{{ 1 + 2 }}").parseAst().body
+
+        assertEquals(8, body.size)
+        body.take(4).forEach {
+            assertIs<AstLexeme.Literal>(it)
+            assertIs<AstLexeme.Primitive>(it)
+        }
+        body.subList(4, 7).forEach {
+            assertIs<AstLexeme.Reference>(it)
+            assertIs<AstLexeme.WritableExpression>(it)
+        }
+        val operation = body.last()
+        assertFalse(operation is AstLexeme.Literal)
+        assertFalse(operation is AstLexeme.Reference)
+        assertIs<AstLexeme.InfixOperation>(operation)
+    }
 
     @Test
     fun parseVariableFromTemplate() = runTest {
