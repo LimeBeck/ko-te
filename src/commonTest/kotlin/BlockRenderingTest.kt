@@ -59,6 +59,37 @@ class BlockRenderingTest {
     }
 
     @Test
+    fun childScopesInheritValuesAndRestoreTemporaryLoopBindings() = runTest {
+        val renderer = object : Renderer {
+            override suspend fun render(templateName: String, context: RuntimeContext): Result<String, ParserError> =
+                Result.ofSuccess("")
+        }
+        val parent = mapOf("item" to "outer", "loop" to "outer loop", "items" to listOf("a"))
+            .wrapAll().asContext(renderer, StaticResourceLoader())
+        val child = parent.childScope()
+        assertSame(parent.renderer, child.renderer)
+        assertSame(parent.resourceLoader, child.resourceLoader)
+        assertEquals("outer", render(child.get("item")))
+
+        child.set("item", RuntimeObject.Null)
+        assertSame(RuntimeObject.Null, child.get("item"))
+        assertEquals("outer", render(parent.get("item")))
+        child.set("item", null)
+        assertEquals("outer", render(child.get("item")))
+
+        SimpleRuntimeEngine.evaluateProgram(
+            "{{ for item in items }}{{ let local = item }}{{ endfor }}".parseAst(), child
+        )
+        assertEquals("a", render(child.get("local")))
+        assertFailsWith<KoteRuntimeException> { parent.get("local") }
+        parent.set("item", "new outer".wrap())
+        parent.set("loop", "new loop".wrap())
+        assertEquals("new outer", render(child.get("item")))
+        assertEquals("new loop", render(child.get("loop")))
+        assertEquals("a", render(child.childScope().get("local")))
+    }
+
+    @Test
     fun importsShareOutputAndAssignmentsInOrder() = runTest {
         val renderer = KoTeRenderer(loader(mapOf(
             "row" to "({{ item }}{{ import 'suffix' }}){{ let last = item }}",

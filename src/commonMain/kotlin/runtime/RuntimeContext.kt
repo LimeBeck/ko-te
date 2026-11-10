@@ -9,6 +9,28 @@ interface RuntimeContext {
     fun set(key: String, obj: RuntimeObject?)
 }
 
+/** Reads inherited names and keeps assignments in the new scope. */
+fun RuntimeContext.childScope(): RuntimeContext = ScopedRuntimeContext(this)
+
+private class ScopedRuntimeContext(private val parent: RuntimeContext) : RuntimeContext by parent {
+    val localBindings = mutableMapOf<String, RuntimeObject>()
+
+    override fun get(key: String): RuntimeObject = localBindings[key] ?: parent.get(key)
+
+    override fun set(key: String, obj: RuntimeObject?) {
+        if (obj == null) localBindings.remove(key) else localBindings[key] = obj
+    }
+}
+
+internal fun RuntimeContext.localBindingForRestore(key: String): RuntimeObject? {
+    if (this is ScopedRuntimeContext) return localBindings[key]
+    return try {
+        get(key)
+    } catch (_: KoteRuntimeException) {
+        null
+    }
+}
+
 fun Any?.wrap(): RuntimeObject =
     when (this) {
         null -> RuntimeObject.Null

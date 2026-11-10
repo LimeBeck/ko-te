@@ -54,8 +54,8 @@ internal object BlockExecutor {
         if (iterable !is RuntimeObject.CollectionWrapper) {
             throw KoteRuntimeException("Iterable must be a collection", position = node.iterable.streamPosition)
         }
-        val previousItem = context.getOrNull(node.item.name)
-        val previousLoop = context.getOrNull("loop")
+        val previousItem = context.localBindingForRestore(node.item.name)
+        val previousLoop = context.localBindingForRestore("loop")
         try {
             iterable.collection.forEachIndexed { index, item ->
                 context.set(node.item.name, item)
@@ -74,12 +74,6 @@ internal object BlockExecutor {
         }
     }
 
-    private fun RuntimeContext.getOrNull(key: String): RuntimeObject? =
-        try {
-            get(key)
-        } catch (_: KoteRuntimeException) {
-            null
-        }
 }
 
 /** Internal fast path; custom public Renderers continue to return their own strings. */

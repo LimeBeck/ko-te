@@ -9,6 +9,7 @@
 - Include the resource path, line, and column in syntax and evaluation diagnostics.
 - Support named arguments for callables that declare parameter names.
 - Allow runtime evaluators to consume an AST stream one node at a time.
+- Support child runtime scopes with inherited lookup and local assignments.
 
 ## 0.6.1
 
