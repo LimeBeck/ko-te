@@ -8,6 +8,7 @@ import dev.limebeck.templateEngine.parser.LexerError
 import dev.limebeck.templateEngine.parser.ParserContext
 import dev.limebeck.templateEngine.parser.TemplateLanguageTokens
 import dev.limebeck.templateEngine.parser.isLanguagePartEnd
+import dev.limebeck.templateEngine.parser.lexerError
 import dev.limebeck.templateEngine.parser.withSourceFile
 
 interface AstParser {
@@ -21,7 +22,7 @@ fun InputStream<LanguageToken>.throwErrorOnValue(expected: String): Nothing {
         next.isLanguagePartEnd -> "end of template block"
         else -> next.toString()
     }
-    throw LexerError(
+    throw lexerError(
         position = next?.startPosition ?: currentPosition,
         message = "<5665e901> Expected $expected, but got $actual"
     )
@@ -29,10 +30,17 @@ fun InputStream<LanguageToken>.throwErrorOnValue(expected: String): Nothing {
 
 class KoTeAstParser : AstParser {
     override fun parse(tokens: Sequence<LanguageToken>): AstRoot {
-        val stream = ((tokens as? TemplateLanguageTokens)?.withBlockEnds ?: tokens).toList().toStream()
-        val body = stream.parseBlockBody()
-        if (stream.hasNext()) stream.throwErrorOnValue("language construction")
-        return AstRoot(body)
+        val languageTokens = ((tokens as? TemplateLanguageTokens)?.withBlockEnds ?: tokens).toList()
+        val stream = languageTokens.toStream()
+        try {
+            val body = stream.parseBlockBody()
+            if (stream.hasNext()) stream.throwErrorOnValue("language construction")
+            return AstRoot(body)
+        } catch (error: LexerError) {
+            if (stream.hasNext() || error.position !== stream.currentPosition) throw error
+            val endPosition = languageTokens.lastOrNull()?.startPosition ?: throw error
+            throw lexerError(endPosition, error.message)
+        }
     }
 
     fun parse(tokens: Sequence<LanguageToken>, context: ParserContext): AstRoot =

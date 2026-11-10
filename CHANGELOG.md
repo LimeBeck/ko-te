@@ -6,6 +6,7 @@
   literals and writable references retain their existing types.
 - Pass lexer and parser contexts containing the file name and path for resource templates.
 - Carry the source file and character position through template tokens, language tokens, and AST nodes.
+- Include the resource path, line, and column in syntax and evaluation diagnostics.
 
 ## 0.6.1
 

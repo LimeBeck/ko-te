@@ -5,9 +5,10 @@ import dev.limebeck.templateEngine.inputStream.*
 internal data class StringLiteral(val source: String, val value: String)
 
 /** Shared by the template scanner and language lexer so quotes have identical boundaries. */
-internal fun RewindableInputStream<Char>.readStringLiteral(): StringLiteral {
-    val start = currentPosition.copy()
-    fun invalid(message: String): Nothing = throw LanguageError(message, start)
+internal fun RewindableInputStream<Char>.readStringLiteral(
+    start: InputStream.Position = currentPosition.copy()
+): StringLiteral {
+    fun invalid(message: String): Nothing = throw languageError(message, start)
     val source = StringBuilder()
     val value = StringBuilder()
     fun take(): Char {

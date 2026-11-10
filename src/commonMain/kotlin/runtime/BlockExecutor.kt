@@ -14,26 +14,28 @@ internal object BlockExecutor {
 
     suspend fun execute(nodes: List<AstLexeme>, context: RuntimeContext, output: StringBuilder) {
         for (node in nodes) {
-            when (node) {
-                is AstLexeme.TemplateSource -> output.append(node.text)
-                is AstLexeme.Conditional -> {
-                    val condition = CoreEvaluator.eval(node.condition, context).result
-                    if (condition !is RuntimeObject.BooleanWrapper) {
-                        throw KoteRuntimeException("Condition returned not a boolean value at $node")
+            node.streamPosition.withRuntimeLocation {
+                when (node) {
+                    is AstLexeme.TemplateSource -> output.append(node.text)
+                    is AstLexeme.Conditional -> {
+                        val condition = CoreEvaluator.eval(node.condition, context).result
+                        if (condition !is RuntimeObject.BooleanWrapper) {
+                            throw KoteRuntimeException("Condition returned not a boolean value")
+                        }
+                        val branch = if (condition.value) node.then else node.another.orEmpty()
+                        execute(branch, context, output)
                     }
-                    val branch = if (condition.value) node.then else node.another.orEmpty()
-                    execute(branch, context, output)
-                }
-                is AstLexeme.Iterator -> executeLoop(node, context, output)
-                is AstLexeme.Import -> {
-                    val renderer = context.renderer
-                    if (renderer is BlockRenderer) {
-                        renderer.renderInto(node.path.value, context, output)
-                    } else {
-                        output.append(render(CoreEvaluator.eval(node, context).result))
+                    is AstLexeme.Iterator -> executeLoop(node, context, output)
+                    is AstLexeme.Import -> {
+                        val renderer = context.renderer
+                        if (renderer is BlockRenderer) {
+                            renderer.renderInto(node.path.value, context, output)
+                        } else {
+                            output.append(render(CoreEvaluator.eval(node, context).result))
+                        }
                     }
+                    else -> output.append(render(CoreEvaluator.eval(node, context).result))
                 }
-                else -> output.append(render(CoreEvaluator.eval(node, context).result))
             }
         }
     }
@@ -44,7 +46,7 @@ internal object BlockExecutor {
         }
         val iterable = context.get(node.iterable.name)
         if (iterable !is RuntimeObject.CollectionWrapper) {
-            throw KoteRuntimeException("Iterable must be a collection at $node")
+            throw KoteRuntimeException("Iterable must be a collection", position = node.iterable.streamPosition)
         }
         val previousItem = context.getOrNull(node.item.name)
         val previousLoop = context.getOrNull("loop")

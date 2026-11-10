@@ -1,4 +1,5 @@
 import dev.limebeck.templateEngine.*
+import dev.limebeck.templateEngine.inputStream.CharInputStream.StringPosition
 import dev.limebeck.templateEngine.inputStream.SimplePosition
 import dev.limebeck.templateEngine.parser.LanguageError
 import dev.limebeck.templateEngine.parser.LexerError
@@ -169,15 +170,39 @@ class BlockRenderingTest {
             renderer.renderFromResource("templates/unclosed.kote", emptyMap())
         }
         assertEquals(SourceFile("templates/unclosed.kote", "unclosed.kote"), lexerError.sourceFile)
+        assertTrue(lexerError.message.startsWith("templates/unclosed.kote:1:9:"))
         val languageError = assertFailsWith<LanguageError> {
             renderer.renderFromResource("templates/invalid.kote", emptyMap())
         }
         assertEquals(SourceFile("templates/invalid.kote", "invalid.kote"), languageError.sourceFile)
+        assertTrue(languageError.message.startsWith("templates/invalid.kote:1:4:"))
         val importedError = assertFailsWith<LexerError> {
             renderer.renderFromResource("templates/main.kote", emptyMap())
         }
         assertEquals(SourceFile("partials/broken.kote", "broken.kote"), importedError.sourceFile)
+        assertTrue(importedError.message.startsWith("partials/broken.kote:1:10:"))
         assertNull(assertFailsWith<LexerError> { renderer.render("{{ 1 + }}") }.sourceFile)
+    }
+
+    @Test
+    fun runtimeErrorsReportTheInnermostResourcePosition() = runTest {
+        val partial = "heading\n{{ 3 / 0 }}"
+        val renderer = KoTeRenderer(loader(mapOf(
+            "main.kote" to "{{ import 'partials/math.kote' }}",
+            "partials/math.kote" to partial,
+            "unclosed.kote" to "{{ if (true) }}\nlast"
+        )))
+
+        val error = assertFailsWith<KoteRuntimeException> {
+            renderer.renderFromResource("main.kote", emptyMap())
+        }
+        val file = SourceFile("partials/math.kote")
+        assertEquals(file, error.sourceFile)
+        assertEquals(StringPosition(partial.indexOf('/'), 2, 5, file), error.position)
+        assertEquals("partials/math.kote:2:6: Division by zero", error.message)
+
+        val eofError = assertFailsWith<LexerError> { renderer.renderFromResource("unclosed.kote", emptyMap()) }
+        assertTrue(eofError.message.startsWith("unclosed.kote:2:5:"))
     }
 
     @Test

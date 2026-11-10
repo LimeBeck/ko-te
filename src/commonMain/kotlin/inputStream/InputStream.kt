@@ -35,6 +35,12 @@ internal fun InputStream.Position.withFile(file: SourceFile?): InputStream.Posit
     else -> FilePosition(this, file)
 }
 
+internal fun InputStream.Position.formatDiagnostic(message: String): String {
+    val file = sourceFile ?: return message
+    val location = if (this is CharInputStream.StringPosition) "$line:${column + 1}" else "offset $absolutePosition"
+    return "${file.path}:$location: $message"
+}
+
 private data class FilePosition(
     private val position: InputStream.Position,
     override val sourceFile: SourceFile

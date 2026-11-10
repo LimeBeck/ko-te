@@ -1,7 +1,7 @@
 package dev.limebeck.templateEngine.parser.ast
 
 import dev.limebeck.templateEngine.inputStream.RewindableInputStream
-import dev.limebeck.templateEngine.inputStream.skipNext
+import dev.limebeck.templateEngine.inputStream.peekOrNull
 import dev.limebeck.templateEngine.parser.LanguageToken
 import dev.limebeck.templateEngine.parser.ast.valueParsers.IdentifierParser
 import dev.limebeck.templateEngine.parser.ast.valueParsers.ExpressionParser
@@ -22,9 +22,10 @@ object VariableAssignParser : AstLexemeParser<AstLexeme.Assign> {
         val variable = IdentifierParser.parse(stream)
         stream.next()
 
-        stream.skipNext(listOf("=")) { value, next ->
-            next is LanguageToken.Operation && next.operation == value
+        if ((stream.peekOrNull() as? LanguageToken.Operation)?.operation != "=") {
+            stream.throwErrorOnValue("'='")
         }
+        stream.next()
 
         val value = ExpressionParser.parse(stream)
 

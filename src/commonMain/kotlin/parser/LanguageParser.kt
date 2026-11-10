@@ -50,7 +50,7 @@ class MustacheLikeLanguageParser : LanguageParser {
                         stream.next()
                     }
                     nextChar.isStringDef() -> {
-                        yield(LanguageToken.StringValue(stream.readStringLiteral().value, startPosition = position))
+                        yield(LanguageToken.StringValue(stream.readStringLiteral(position).value, startPosition = position))
                     }
                     nextChar.isDigit() -> {
                         var hasPointInside = false
@@ -60,7 +60,7 @@ class MustacheLikeLanguageParser : LanguageParser {
                                     hasPointInside = true
                                     return@readUntil true
                                 } else {
-                                    throw LanguageError(
+                                    throw languageError(
                                         position = position,
                                         message = "<1ac7d0b6> Unexpected point inside number ${token.text}"
                                     )
@@ -72,10 +72,10 @@ class MustacheLikeLanguageParser : LanguageParser {
                             LanguageToken.NumericValue(
                                 value = if (hasPointInside) {
                                     digit.toDoubleOrNull()?.takeIf { it.isFinite() }
-                                        ?: throw LanguageError("Invalid number: $digit", position)
+                                        ?: throw languageError("Invalid number: $digit", position)
                                 } else {
                                     digit.toIntOrNull() ?: digit.toLongOrNull()
-                                        ?: throw LanguageError("Integer is outside Long range: $digit", position)
+                                        ?: throw languageError("Integer is outside Long range: $digit", position)
                                 },
                                 startPosition = position
                             ).apply { isIntegerLiteral = !hasPointInside }
@@ -101,7 +101,7 @@ class MustacheLikeLanguageParser : LanguageParser {
                         }
                     }
                     else -> {
-                        throw LanguageError(
+                        throw languageError(
                             position = position,
                             message = "<4bf66c83> Unexpected token '${token.text}'"
                         )
@@ -127,11 +127,9 @@ class MustacheLikeLanguageParser : LanguageParser {
                                 startPosition = token.startPosition.withFile(context.file)
                             )
                         )
-                        is TemplateToken.LanguagePart -> {
-                            yieldAll(parseLanguageToken(token, context.file))
-                            yield(LanguageToken.Punctuation(LANGUAGE_PART_END, token.endPosition.withFile(context.file)))
-                        }
+                        is TemplateToken.LanguagePart -> yieldAll(parseLanguageToken(token, context.file))
                     }
+                    yield(LanguageToken.Punctuation(LANGUAGE_PART_END, token.endPosition.withFile(context.file)))
                 }
             }
         })

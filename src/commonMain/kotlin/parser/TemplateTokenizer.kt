@@ -31,12 +31,14 @@ class MustacheLikeTemplateTokenizer(
         val startPosition = currentPosition.copy().withFile(file)
         val languageConstructions = buildString {
             while (hasNext() && !isNextSequenceEquals(delimiterEnd)) {
-                if (peek() == '"' || peek() == '\'') append(readStringLiteral().source)
+                if (peek() == '"' || peek() == '\'') append(readStringLiteral(currentPosition.withFile(file)).source)
                 else append(next())
             }
         }
 
-        if (!hasNext()) throw LexerError(currentPosition.copy(), "Unterminated template block: expected $delimiterEndSymbol")
+        if (!hasNext()) {
+            throw lexerError(currentPosition.copy().withFile(file), "Unterminated template block: expected $delimiterEndSymbol")
+        }
         skipNext(delimiterEnd)
 
         return listOf(
