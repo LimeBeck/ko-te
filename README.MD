@@ -60,6 +60,10 @@ there is no implicit standard function set. Imports use the supplied `ResourceLo
 share the current render's variables. Import cycles and depth greater than 64 are rejected.
 Each top-level render has its own context and import stack.
 
+Register a callable with `CallableWrapper.from(listOf("left", "right")) { args, context -> ... }`
+to support calls such as `{{ combine(right = "B", left = "A") }}`. Positional arguments come
+first. The engine evaluates arguments in template order and passes values in parameter order.
+
 Pipe syntax and template inheritance are not implemented.
 
 ## Blocks
