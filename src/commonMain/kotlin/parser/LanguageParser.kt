@@ -1,5 +1,6 @@
 package dev.limebeck.templateEngine.parser
 
+import dev.limebeck.templateEngine.SourceFile
 import dev.limebeck.templateEngine.inputStream.*
 
 interface LanguageParser {
@@ -8,7 +9,8 @@ interface LanguageParser {
 
 data class LanguageError(
     override val message: String,
-    override val position: InputStream.Position
+    override val position: InputStream.Position,
+    override val sourceFile: SourceFile? = null
 ) : ParserError, Throwable(message)
 
 class MustacheLikeLanguageParser : LanguageParser {
@@ -112,18 +114,23 @@ class MustacheLikeLanguageParser : LanguageParser {
     }
 
     override suspend fun parse(tokens: Sequence<TemplateToken>): Sequence<LanguageToken> =
+        parse(tokens, LexerContext())
+
+    suspend fun parse(tokens: Sequence<TemplateToken>, context: LexerContext): Sequence<LanguageToken> =
         TemplateLanguageTokens(sequence {
-            tokens.forEach { token ->
-                when (token) {
-                    is TemplateToken.TemplateSource -> yield(
-                        LanguageToken.TemplateSource(
-                            token.text,
-                            startPosition = token.startPosition
+            withSourceFile(context.file) {
+                tokens.forEach { token ->
+                    when (token) {
+                        is TemplateToken.TemplateSource -> yield(
+                            LanguageToken.TemplateSource(
+                                token.text,
+                                startPosition = token.startPosition
+                            )
                         )
-                    )
-                    is TemplateToken.LanguagePart -> {
-                        yieldAll(parseLanguageToken(token))
-                        yield(LanguageToken.Punctuation(LANGUAGE_PART_END, token.endPosition))
+                        is TemplateToken.LanguagePart -> {
+                            yieldAll(parseLanguageToken(token))
+                            yield(LanguageToken.Punctuation(LANGUAGE_PART_END, token.endPosition))
+                        }
                     }
                 }
             }

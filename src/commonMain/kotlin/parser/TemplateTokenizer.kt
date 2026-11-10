@@ -1,5 +1,6 @@
 package dev.limebeck.templateEngine.parser
 
+import dev.limebeck.templateEngine.SourceFile
 import dev.limebeck.templateEngine.inputStream.*
 
 interface TemplateTokenizer {
@@ -8,7 +9,8 @@ interface TemplateTokenizer {
 
 data class LexerError(
     override val position: InputStream.Position,
-    override val message: String
+    override val message: String,
+    override val sourceFile: SourceFile? = null
 ) : ParserError, Throwable(message)
 
 
@@ -78,4 +80,7 @@ class MustacheLikeTemplateTokenizer(
         }
         return tokens
     }
+
+    fun analyze(stream: RewindableInputStream<Char>, context: LexerContext): List<TemplateToken> =
+        withSourceFile(context.file) { analyze(stream) }
 }

@@ -1,8 +1,10 @@
 package dev.limebeck.templateEngine
 
 import dev.limebeck.templateEngine.inputStream.toStream
+import dev.limebeck.templateEngine.parser.LexerContext
 import dev.limebeck.templateEngine.parser.MustacheLikeLanguageParser
 import dev.limebeck.templateEngine.parser.MustacheLikeTemplateTokenizer
+import dev.limebeck.templateEngine.parser.ParserContext
 import dev.limebeck.templateEngine.parser.ParserError
 import dev.limebeck.templateEngine.parser.ast.KoTeAstParser
 import dev.limebeck.templateEngine.runtime.*
@@ -36,7 +38,9 @@ class KoTeRenderer(
                 if (importStack.size >= 64) throw KoteRuntimeException("Maximum import depth (64) exceeded")
                 importStack.add(templateName)
                 try {
-                    this@KoTeRenderer.renderInto(resourceLoader.loadTemplate(templateName), context, output)
+                    this@KoTeRenderer.renderInto(
+                        resourceLoader.loadTemplate(templateName), context, output, SourceFile(templateName)
+                    )
                 } finally {
                     importStack.removeAt(importStack.lastIndex)
                 }
@@ -51,11 +55,17 @@ class KoTeRenderer(
         return Result.ofSuccess(output.toString())
     }
 
-    private suspend fun renderInto(template: String, context: RuntimeContext, output: StringBuilder) {
+    private suspend fun renderInto(
+        template: String,
+        context: RuntimeContext,
+        output: StringBuilder,
+        file: SourceFile? = null
+    ) {
         val templateStream = template.toStream()
-        val tokens = tokenizer.analyze(templateStream)
-        val languageTokens = languageParser.parse(tokens.asSequence())
-        val ast = astParser.parse(languageTokens)
+        val lexerContext = LexerContext(file)
+        val tokens = tokenizer.analyze(templateStream, lexerContext)
+        val languageTokens = languageParser.parse(tokens.asSequence(), lexerContext)
+        val ast = astParser.parse(languageTokens, ParserContext(file))
         BlockExecutor.execute(ast.body, context, output)
     }
 

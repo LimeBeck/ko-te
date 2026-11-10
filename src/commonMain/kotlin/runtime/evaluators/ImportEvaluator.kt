@@ -12,7 +12,7 @@ object ImportEvaluator : Evaluator<AstLexeme.Import, RuntimeObject> {
             is Result.Success -> EvalResult(RuntimeObject.StringWrapper(result.value))
             is Result.Error -> {
                 val error = result.error
-                throw (error as? Throwable ?: LexerError(error.position, error.message))
+                throw (error as? Throwable ?: LexerError(error.position, error.message, error.sourceFile))
             }
         }
     }

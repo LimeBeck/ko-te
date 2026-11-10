@@ -5,8 +5,10 @@ import dev.limebeck.templateEngine.inputStream.peekOrNull
 import dev.limebeck.templateEngine.inputStream.toStream
 import dev.limebeck.templateEngine.parser.LanguageToken
 import dev.limebeck.templateEngine.parser.LexerError
+import dev.limebeck.templateEngine.parser.ParserContext
 import dev.limebeck.templateEngine.parser.TemplateLanguageTokens
 import dev.limebeck.templateEngine.parser.isLanguagePartEnd
+import dev.limebeck.templateEngine.parser.withSourceFile
 
 interface AstParser {
     fun parse(tokens: Sequence<LanguageToken>): AstRoot
@@ -32,4 +34,7 @@ class KoTeAstParser : AstParser {
         if (stream.hasNext()) stream.throwErrorOnValue("language construction")
         return AstRoot(body)
     }
+
+    fun parse(tokens: Sequence<LanguageToken>, context: ParserContext): AstRoot =
+        withSourceFile(context.file) { parse(tokens) }
 }

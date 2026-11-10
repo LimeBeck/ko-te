@@ -1,5 +1,6 @@
 import dev.limebeck.templateEngine.*
 import dev.limebeck.templateEngine.inputStream.SimplePosition
+import dev.limebeck.templateEngine.parser.LanguageError
 import dev.limebeck.templateEngine.parser.LexerError
 import dev.limebeck.templateEngine.parser.ParserError
 import dev.limebeck.templateEngine.runtime.*
@@ -153,6 +154,30 @@ class BlockRenderingTest {
                 if (error is Throwable) assertSame(error, actual)
             }
         }
+    }
+
+    @Test
+    fun diagnosticsIdentifyTheResourceThatFailedToParse() = runTest {
+        val renderer = KoTeRenderer(loader(mapOf(
+            "templates/unclosed.kote" to "{{ value",
+            "templates/invalid.kote" to "{{ @ }}",
+            "templates/main.kote" to "{{ import 'partials/broken.kote' }}",
+            "partials/broken.kote" to "{{ 1 + }}"
+        )))
+
+        val lexerError = assertFailsWith<LexerError> {
+            renderer.renderFromResource("templates/unclosed.kote", emptyMap())
+        }
+        assertEquals(SourceFile("templates/unclosed.kote", "unclosed.kote"), lexerError.sourceFile)
+        val languageError = assertFailsWith<LanguageError> {
+            renderer.renderFromResource("templates/invalid.kote", emptyMap())
+        }
+        assertEquals(SourceFile("templates/invalid.kote", "invalid.kote"), languageError.sourceFile)
+        val importedError = assertFailsWith<LexerError> {
+            renderer.renderFromResource("templates/main.kote", emptyMap())
+        }
+        assertEquals(SourceFile("partials/broken.kote", "broken.kote"), importedError.sourceFile)
+        assertNull(assertFailsWith<LexerError> { renderer.render("{{ 1 + }}") }.sourceFile)
     }
 
     @Test
