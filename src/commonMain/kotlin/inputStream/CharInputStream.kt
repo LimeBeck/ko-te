@@ -13,6 +13,12 @@ class CharInputStream(private val string: String) : RewindableInputStream<Char> 
         string.split('\n')
     }
 
+    internal fun matchesNext(value: List<*>): Boolean {
+        val offset = position.absolutePosition
+        if (value.size > string.length - offset) return false
+        return value.withIndex().all { (index, char) -> string[offset + index] == char }
+    }
+
     override fun peek(): Char {
         if (position.absolutePosition >= string.length) {
             throw StreamError(position, "<e0920d18> Invalid position. Max allowed absolutePosition - ${string.length - 1}")

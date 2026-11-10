@@ -19,19 +19,23 @@ class MustacheLikeTemplateTokenizer(
     init {
         require(delimiterStartSymbol.isNotEmpty() && delimiterEndSymbol.isNotEmpty())
     }
+
+    private val delimiterStart = delimiterStartSymbol.toList()
+    private val delimiterEnd = delimiterEndSymbol.toList()
+
     private fun RewindableInputStream<Char>.readLanguageParts(): List<TemplateToken.LanguagePart> {
-        skipNext(delimiterStartSymbol.asIterable().toList())
+        skipNext(delimiterStart)
         skipEmpty()
         val startPosition = currentPosition.copy()
         val languageConstructions = buildString {
-            while (hasNext() && !isNextSequenceEquals(delimiterEndSymbol.toList())) {
+            while (hasNext() && !isNextSequenceEquals(delimiterEnd)) {
                 if (peek() == '"' || peek() == '\'') append(readStringLiteral().source)
                 else append(next())
             }
         }
 
         if (!hasNext()) throw LexerError(currentPosition.copy(), "Unterminated template block: expected $delimiterEndSymbol")
-        skipNext(delimiterEndSymbol.asIterable().toList())
+        skipNext(delimiterEnd)
 
         return listOf(
             TemplateToken.LanguagePart(
@@ -46,7 +50,7 @@ class MustacheLikeTemplateTokenizer(
         val startPosition = currentPosition.copy()
 
         val rawTemplate = readUntil {
-            !isNextSequenceEquals(delimiterStartSymbol.asIterable().toList())
+            !isNextSequenceEquals(delimiterStart)
         }
 
         return if (rawTemplate.isNotEmpty())

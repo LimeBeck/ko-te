@@ -35,7 +35,10 @@ internal fun RewindableInputStream<Char>.readStringLiteral(): StringLiteral {
                 'f' -> '\u000C'
                 'u' -> {
                     val hex = buildString { repeat(4) { append(take()) } }
-                    (hex.toIntOrNull(16) ?: invalid("Invalid Unicode escape")).toChar()
+                    if (hex.any { it !in '0'..'9' && it !in 'A'..'F' && it !in 'a'..'f' }) {
+                        invalid("Invalid Unicode escape")
+                    }
+                    hex.toInt(16).toChar()
                 }
                 else -> invalid("Unknown string escape: $escape")
             })

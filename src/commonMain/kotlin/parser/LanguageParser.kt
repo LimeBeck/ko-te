@@ -76,7 +76,7 @@ class MustacheLikeLanguageParser : LanguageParser {
                                         ?: throw LanguageError("Integer is outside Long range: $digit", position)
                                 },
                                 startPosition = position
-                            )
+                            ).apply { isIntegerLiteral = !hasPointInside }
                         )
                     }
                     nextChar.isLetter() -> {
@@ -111,8 +111,8 @@ class MustacheLikeLanguageParser : LanguageParser {
         }
     }
 
-    override suspend fun parse(tokens: Sequence<TemplateToken>): Sequence<LanguageToken> {
-        return sequence {
+    override suspend fun parse(tokens: Sequence<TemplateToken>): Sequence<LanguageToken> =
+        TemplateLanguageTokens(sequence {
             tokens.forEach { token ->
                 when (token) {
                     is TemplateToken.TemplateSource -> yield(
@@ -121,9 +121,16 @@ class MustacheLikeLanguageParser : LanguageParser {
                             startPosition = token.startPosition
                         )
                     )
-                    is TemplateToken.LanguagePart -> yieldAll(parseLanguageToken(token))
+                    is TemplateToken.LanguagePart -> {
+                        yieldAll(parseLanguageToken(token))
+                        yield(LanguageToken.Punctuation(LANGUAGE_PART_END, token.endPosition))
+                    }
                 }
             }
-        }
-    }
+        })
+}
+
+// AST parsing needs block boundaries. Iterating the public token sequence still yields just the tokens.
+internal class TemplateLanguageTokens(val withBlockEnds: Sequence<LanguageToken>) : Sequence<LanguageToken> {
+    override fun iterator(): Iterator<LanguageToken> = withBlockEnds.filterNot { it.isLanguagePartEnd }.iterator()
 }

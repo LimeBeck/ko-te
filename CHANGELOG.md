@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.1
+
+- Keep adjacent template blocks separate when parsing expressions and statements.
+- Require an integer literal in list indices consistently across targets.
+- Compare template delimiters without rewinding the character stream.
+- Preserve errors returned by custom renderers when evaluating imports.
+- Accept keywords as object field names after a dot.
+- Require four hexadecimal digits in Unicode escapes.
+
 ## 0.6.0
 
 - Add unary `+`, `-` and `!`, including nested prefixes and adjacent binary/prefix

@@ -12,6 +12,62 @@ class ReviewRegressionTest {
     private val renderer = KoTeRenderer()
 
     @Test
+    fun adjacentBlocksRenderSeparateExpressions() = runTest {
+        assertEquals("4-2", renderer.render("{{ 4 }}{{ -2 }}").getValueOrNull())
+        assertEquals("AB", renderer.render("{{ 'A' }}{{ ('B') }}").getValueOrNull())
+        assertEquals("-2:4", renderer.render("{{ let n = 4 }}{{ -2 }}:{{ n }}").getValueOrNull())
+        assertEquals("4-2", renderer.render(
+            "{{ if (true) }}{{ 4 }}{{ }}{{ -2 }}{{ else }}unused{{ endif }}"
+        ).getValueOrNull())
+    }
+
+    @Test
+    fun unfinishedSyntaxCannotContinueInAnotherBlock() = runTest {
+        for (template in listOf(
+            "{{ 1 + }}{{ 2 }}",
+            "{{ (1 }}{{ ) }}",
+            "{{ f(1 }}{{ ) }}",
+            "{{ items[0 }}{{ ] }}",
+            "{{ obj. }}{{ field }}",
+            "{{ let n = }}{{ 2 }}",
+            "{{ import }}{{ 'part' }}",
+            "{{ if (true }}{{ ) }}yes{{ endif }}",
+            "{{ for item in }}{{ items }}{{ endfor }}"
+        )) {
+            assertFailsWith<LexerError>(template) { renderer.render(template) }
+        }
+    }
+
+    @Test
+    fun listIndicesRequireIntLiteralsOnEveryTarget() = runTest {
+        val data = mapOf("items" to listOf("first", "second"))
+        assertEquals("first|second", renderer.render("{{ items[0] }}|{{ items[1] }}", data).getValueOrNull())
+        for (index in listOf("0.0000001", "1.0", "0.0", "0.5", "-1", "2147483648")) {
+            assertFailsWith<LexerError>(index) { renderer.render("{{ items[$index] }}", data) }
+        }
+        assertFailsWith<KoteRuntimeException> { renderer.render("{{ items[2147483647] }}", data) }
+    }
+
+    @Test
+    fun keywordsCanBeObjectFieldNames() = runTest {
+        val data = mapOf("labels" to mapOf("null" to "fallback", "if" to mapOf("true" to "yes")))
+        assertEquals("fallback|yes|null|true", renderer.render(
+            "{{ labels.null }}|{{ labels.if.true }}|{{ null }}|{{ true }}", data
+        ).getValueOrNull())
+        assertFailsWith<KoteRuntimeException> { renderer.render("{{ labels.else }}", data) }
+        assertFailsWith<LexerError> { renderer.render("{{ let null = 1 }}") }
+    }
+
+    @Test
+    fun unicodeEscapesRequireFourAsciiHexDigits() = runTest {
+        assertEquals("A¯😀", renderer.render("""{{ '\u0041\u00aF\uD83D\uDE00' }}""").getValueOrNull())
+        assertEquals("\\u+041", renderer.render("{{ \"\"\"\\u+041\"\"\" }}").getValueOrNull())
+        for (digits in listOf("+041", "-041", "００４１", "0G41", "041")) {
+            assertFailsWith<LanguageError>(digits) { renderer.render("{{ '\\u$digits' }}") }
+        }
+    }
+
+    @Test
     fun arithmeticPrecedenceAndAssociativity() = runTest {
         val cases = mapOf(
             "10 - 3 - 2" to "5", "20 / 2 / 2" to "5", "10 % 3 * 2" to "2",

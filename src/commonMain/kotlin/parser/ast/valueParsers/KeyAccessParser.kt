@@ -1,6 +1,7 @@
 package dev.limebeck.templateEngine.parser.ast.valueParsers
 
 import dev.limebeck.templateEngine.inputStream.RewindableInputStream
+import dev.limebeck.templateEngine.inputStream.peekOrNull
 import dev.limebeck.templateEngine.inputStream.recoverable
 import dev.limebeck.templateEngine.inputStream.skipNext
 import dev.limebeck.templateEngine.parser.LanguageToken
@@ -8,6 +9,13 @@ import dev.limebeck.templateEngine.parser.ast.AstLexeme
 import dev.limebeck.templateEngine.parser.ast.throwErrorOnValue
 
 object KeyAccessParser : ComplexParser {
+    private val LanguageToken?.fieldName: String?
+        get() = when (this) {
+            is LanguageToken.Identifier -> name
+            is LanguageToken.Keyword -> name
+            else -> null
+        }
+
     override fun canParse(stream: RewindableInputStream<LanguageToken>): Boolean {
         return recoverable(stream) {
             val canParseIdentifier = IdentifierParser.canParse(stream)
@@ -28,8 +36,7 @@ object KeyAccessParser : ComplexParser {
 
         if (hasDot) {
             stream.next()
-            val canParseKey = IdentifierParser.canParse(stream)
-            return@recoverable canParseKey
+            return@recoverable stream.peekOrNull().fieldName != null
         }
         return@recoverable false
     }
@@ -43,8 +50,8 @@ object KeyAccessParser : ComplexParser {
         if (!hasDot)
             stream.throwErrorOnValue("punctuation '.'")
         stream.skipNext(1)
-        val identifier = IdentifierParser.parse(stream)
-        return AstLexeme.KeyAccess(stream.currentPosition.copy(), prevExpression, identifier.name)
+        val fieldName = stream.peekOrNull().fieldName ?: stream.throwErrorOnValue("field name")
+        return AstLexeme.KeyAccess(stream.currentPosition.copy(), prevExpression, fieldName)
     }
 
     override fun parse(stream: RewindableInputStream<LanguageToken>): AstLexeme.KeyAccess {

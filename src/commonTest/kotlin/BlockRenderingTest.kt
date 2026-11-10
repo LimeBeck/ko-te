@@ -1,4 +1,6 @@
 import dev.limebeck.templateEngine.*
+import dev.limebeck.templateEngine.inputStream.SimplePosition
+import dev.limebeck.templateEngine.parser.LexerError
 import dev.limebeck.templateEngine.parser.ParserError
 import dev.limebeck.templateEngine.runtime.*
 import kotlinx.coroutines.CancellationException
@@ -125,6 +127,32 @@ class BlockRenderingTest {
             "{{ if (true) }}A{{ for item in items }}{{ import 'row' }}{{ endfor }}B{{ endif }}".parseAst(), context)
         assertEquals("A<a><b>B", result.render())
         assertEquals(listOf("row", "row"), calls)
+    }
+
+    @Test
+    fun importsPropagateErrorsReturnedByCustomRenderers() = runTest {
+        val position = SimplePosition(3)
+        val lexerError = LexerError(position, "Invalid imported template")
+        val parserError = object : ParserError {
+            override val position = SimplePosition(8)
+            override val message = "Could not parse imported template"
+        }
+
+        for (error in listOf(lexerError, parserError)) {
+            val renderer = object : Renderer {
+                override suspend fun render(templateName: String, context: RuntimeContext): Result<String, ParserError> =
+                    Result.ofError(error)
+            }
+            val context = emptyMap<String, RuntimeObject>().asContext(renderer, StaticResourceLoader())
+            for (template in listOf("{{ import 'row' }}", "{{ if (true) }}{{ import 'row' }}{{ endif }}")) {
+                val actual = assertFailsWith<LexerError>(template) {
+                    SimpleRuntimeEngine.evaluateProgram(template.parseAst(), context)
+                }
+                assertEquals(error.position, actual.position)
+                assertEquals(error.message, actual.message)
+                if (error is Throwable) assertSame(error, actual)
+            }
+        }
     }
 
     @Test

@@ -1,6 +1,7 @@
 package dev.limebeck.templateEngine.parser.ast.valueParsers
 
 import dev.limebeck.templateEngine.inputStream.RewindableInputStream
+import dev.limebeck.templateEngine.inputStream.peekOrNull
 import dev.limebeck.templateEngine.inputStream.recoverable
 import dev.limebeck.templateEngine.inputStream.skipNext
 import dev.limebeck.templateEngine.parser.LanguageToken
@@ -19,7 +20,11 @@ object IndexAccessParser : ComplexParser {
         }
     }
 
-    fun Number.isInteger() = !this.toString().contains(".")
+    fun Number.isInteger() = this is Long ||
+        (this is Byte || this is Short || this is Int) && toDouble() % 1.0 == 0.0
+
+    private fun LanguageToken.NumericValue.isListIndex(): Boolean =
+        (isIntegerLiteral ?: value.isInteger()) && value.toLong() in 0L..Int.MAX_VALUE.toLong()
 
     override fun canParseNext(stream: RewindableInputStream<LanguageToken>): Boolean = recoverable(stream) {
         if(!stream.hasNext())
@@ -30,13 +35,10 @@ object IndexAccessParser : ComplexParser {
 
         if (hasOpenBracket) {
             stream.next()
-            val index = stream.peek()
-            if (index is LanguageToken.NumericValue && index.value.isInteger() && index.value.toLong() in 0L..Int.MAX_VALUE.toLong()) {
+            val index = stream.peekOrNull()
+            if (index is LanguageToken.NumericValue && index.isListIndex()) {
                 stream.next()
-                val closedBracket = stream.peek()
-                val hasClosedBracket = closedBracket is LanguageToken.Punctuation && closedBracket.value == "]" 
-                
-                return@recoverable hasClosedBracket
+                return@recoverable (stream.peekOrNull() as? LanguageToken.Punctuation)?.value == "]"
             }
         }
         return@recoverable false
@@ -51,12 +53,10 @@ object IndexAccessParser : ComplexParser {
         if (!hasOpenBracket)
             stream.throwErrorOnValue("punctuation '['")
         stream.skipNext(1)
-        val index = stream.peek().also {
-            if (it !is LanguageToken.NumericValue || (!it.value.isInteger() || it.value.toLong() !in 0L..Int.MAX_VALUE.toLong()))
-                stream.throwErrorOnValue("integer number")
-        } as LanguageToken.NumericValue
+        val index = stream.peekOrNull() as? LanguageToken.NumericValue
+        if (index == null || !index.isListIndex()) stream.throwErrorOnValue("non-negative Int literal")
         stream.next()
-        val closedBracket = stream.peek()
+        val closedBracket = stream.peekOrNull()
         val hasClosedBracket = closedBracket is LanguageToken.Punctuation && closedBracket.value == "]"
         if (!hasClosedBracket)
             stream.throwErrorOnValue("punctuation ']'")
