@@ -1,5 +1,7 @@
 package dev.limebeck.templateEngine.runtime
 
+import dev.limebeck.templateEngine.inputStream.InputStream
+import dev.limebeck.templateEngine.inputStream.toStream
 import dev.limebeck.templateEngine.parser.ast.AstLexeme
 import dev.limebeck.templateEngine.render
 import dev.limebeck.templateEngine.runtime.evaluators.CoreEvaluator
@@ -12,8 +14,12 @@ internal object BlockExecutor {
         return output.toString()
     }
 
-    suspend fun execute(nodes: List<AstLexeme>, context: RuntimeContext, output: StringBuilder) {
-        for (node in nodes) {
+    suspend fun execute(nodes: List<AstLexeme>, context: RuntimeContext, output: StringBuilder) =
+        execute(nodes.toStream(), context, output)
+
+    private suspend fun execute(nodes: InputStream<AstLexeme>, context: RuntimeContext, output: StringBuilder) {
+        while (nodes.hasNext()) {
+            val node = nodes.next()
             node.streamPosition.withRuntimeLocation {
                 when (node) {
                     is AstLexeme.TemplateSource -> output.append(node.text)

@@ -8,6 +8,7 @@
 - Carry the source file and character position through template tokens, language tokens, and AST nodes.
 - Include the resource path, line, and column in syntax and evaluation diagnostics.
 - Support named arguments for callables that declare parameter names.
+- Allow runtime evaluators to consume an AST stream one node at a time.
 
 ## 0.6.1
 
