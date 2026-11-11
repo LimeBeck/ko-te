@@ -42,10 +42,18 @@ sealed interface LanguageToken {
     data class NumericValue(
         val value: Number,
         override val startPosition: InputStream.Position
-    ) : LanguageToken
+    ) : LanguageToken {
+        // The value alone cannot distinguish 1 from 1.0 on Kotlin/JS.
+        internal var isIntegerLiteral: Boolean? = null
+    }
 
     data class Commentary(
         val comment: String,
         override val startPosition: InputStream.Position
     ) : LanguageToken
 }
+
+internal const val LANGUAGE_PART_END = "}}"
+
+internal val LanguageToken.isLanguagePartEnd: Boolean
+    get() = this is LanguageToken.Punctuation && value == LANGUAGE_PART_END

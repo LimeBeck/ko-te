@@ -18,6 +18,8 @@ fun <T> InputStream<T>.readSequence(length: Int): List<T> {
 }
 
 fun <T> RewindableInputStream<T>.isNextSequenceEquals(value: List<T>): Boolean {
+    if (this is CharInputStream) return matchesNext(value)
+
     val lastPosition = currentPosition.absolutePosition
 
     fun reset() {

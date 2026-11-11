@@ -5,9 +5,10 @@ import dev.limebeck.templateEngine.inputStream.*
 internal data class StringLiteral(val source: String, val value: String)
 
 /** Shared by the template scanner and language lexer so quotes have identical boundaries. */
-internal fun RewindableInputStream<Char>.readStringLiteral(): StringLiteral {
-    val start = currentPosition.copy()
-    fun invalid(message: String): Nothing = throw LanguageError(message, start)
+internal fun RewindableInputStream<Char>.readStringLiteral(
+    start: InputStream.Position = currentPosition.copy()
+): StringLiteral {
+    fun invalid(message: String): Nothing = throw languageError(message, start)
     val source = StringBuilder()
     val value = StringBuilder()
     fun take(): Char {
@@ -35,7 +36,10 @@ internal fun RewindableInputStream<Char>.readStringLiteral(): StringLiteral {
                 'f' -> '\u000C'
                 'u' -> {
                     val hex = buildString { repeat(4) { append(take()) } }
-                    (hex.toIntOrNull(16) ?: invalid("Invalid Unicode escape")).toChar()
+                    if (hex.any { it !in '0'..'9' && it !in 'A'..'F' && it !in 'a'..'f' }) {
+                        invalid("Invalid Unicode escape")
+                    }
+                    hex.toInt(16).toChar()
                 }
                 else -> invalid("Unknown string escape: $escape")
             })

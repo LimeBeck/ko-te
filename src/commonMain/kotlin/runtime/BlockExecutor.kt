@@ -1,5 +1,7 @@
 package dev.limebeck.templateEngine.runtime
 
+import dev.limebeck.templateEngine.inputStream.InputStream
+import dev.limebeck.templateEngine.inputStream.toStream
 import dev.limebeck.templateEngine.parser.ast.AstLexeme
 import dev.limebeck.templateEngine.render
 import dev.limebeck.templateEngine.runtime.evaluators.CoreEvaluator
@@ -12,28 +14,34 @@ internal object BlockExecutor {
         return output.toString()
     }
 
-    suspend fun execute(nodes: List<AstLexeme>, context: RuntimeContext, output: StringBuilder) {
-        for (node in nodes) {
-            when (node) {
-                is AstLexeme.TemplateSource -> output.append(node.text)
-                is AstLexeme.Conditional -> {
-                    val condition = CoreEvaluator.eval(node.condition, context).result
-                    if (condition !is RuntimeObject.BooleanWrapper) {
-                        throw KoteRuntimeException("Condition returned not a boolean value at $node")
+    suspend fun execute(nodes: List<AstLexeme>, context: RuntimeContext, output: StringBuilder) =
+        execute(nodes.toStream(), context, output)
+
+    private suspend fun execute(nodes: InputStream<AstLexeme>, context: RuntimeContext, output: StringBuilder) {
+        while (nodes.hasNext()) {
+            val node = nodes.next()
+            node.streamPosition.withRuntimeLocation {
+                when (node) {
+                    is AstLexeme.TemplateSource -> output.append(node.text)
+                    is AstLexeme.Conditional -> {
+                        val condition = CoreEvaluator.eval(node.condition, context).result
+                        if (condition !is RuntimeObject.BooleanWrapper) {
+                            throw KoteRuntimeException("Condition returned not a boolean value")
+                        }
+                        val branch = if (condition.value) node.then else node.another.orEmpty()
+                        execute(branch, context, output)
                     }
-                    val branch = if (condition.value) node.then else node.another.orEmpty()
-                    execute(branch, context, output)
-                }
-                is AstLexeme.Iterator -> executeLoop(node, context, output)
-                is AstLexeme.Import -> {
-                    val renderer = context.renderer
-                    if (renderer is BlockRenderer) {
-                        renderer.renderInto(node.path.value, context, output)
-                    } else {
-                        output.append(render(CoreEvaluator.eval(node, context).result))
+                    is AstLexeme.Iterator -> executeLoop(node, context, output)
+                    is AstLexeme.Import -> {
+                        val renderer = context.renderer
+                        if (renderer is BlockRenderer) {
+                            renderer.renderInto(node.path.value, context, output)
+                        } else {
+                            output.append(render(CoreEvaluator.eval(node, context).result))
+                        }
                     }
+                    else -> output.append(render(CoreEvaluator.eval(node, context).result))
                 }
-                else -> output.append(render(CoreEvaluator.eval(node, context).result))
             }
         }
     }
@@ -44,10 +52,10 @@ internal object BlockExecutor {
         }
         val iterable = context.get(node.iterable.name)
         if (iterable !is RuntimeObject.CollectionWrapper) {
-            throw KoteRuntimeException("Iterable must be a collection at $node")
+            throw KoteRuntimeException("Iterable must be a collection", position = node.iterable.streamPosition)
         }
-        val previousItem = context.getOrNull(node.item.name)
-        val previousLoop = context.getOrNull("loop")
+        val previousItem = context.localBindingForRestore(node.item.name)
+        val previousLoop = context.localBindingForRestore("loop")
         try {
             iterable.collection.forEachIndexed { index, item ->
                 context.set(node.item.name, item)
@@ -66,12 +74,6 @@ internal object BlockExecutor {
         }
     }
 
-    private fun RuntimeContext.getOrNull(key: String): RuntimeObject? =
-        try {
-            get(key)
-        } catch (_: KoteRuntimeException) {
-            null
-        }
 }
 
 /** Internal fast path; custom public Renderers continue to return their own strings. */

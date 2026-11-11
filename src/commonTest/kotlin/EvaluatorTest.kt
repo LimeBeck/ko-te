@@ -1,11 +1,15 @@
 import dev.limebeck.templateEngine.Result
+import dev.limebeck.templateEngine.inputStream.toStream
 import dev.limebeck.templateEngine.parser.ParserError
 import dev.limebeck.templateEngine.render
 import dev.limebeck.templateEngine.runtime.*
+import dev.limebeck.templateEngine.runtime.evaluators.CoreEvaluator
 import utils.parseAst
 import utils.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 
 class EvaluatorTest {
     private val emptyResourceLoader = StaticResourceLoader()
@@ -14,6 +18,19 @@ class EvaluatorTest {
         override suspend fun render(templateName: String, context: RuntimeContext): Result<String, ParserError> {
             TODO("<cc8f3059> Not yet implemented")
         }
+    }
+
+    @Test
+    fun runtimeCanConsumeAstStreamsIncrementally() = runTest {
+        val context = emptyMap<String, RuntimeObject>().asContext(renderer, emptyResourceLoader)
+        val stream = "{{ 1 }}{{ missing }}{{ 3 }}".parseAst().body.toStream()
+
+        assertEquals("1", render(CoreEvaluator.eval(stream, context).result))
+        assertFailsWith<KoteRuntimeException> { SimpleRuntimeEngine.evaluateProgram(stream, context) }
+        assertEquals(2, stream.currentPosition.absolutePosition)
+        assertEquals("3", SimpleRuntimeEngine.evaluateProgram(stream, context).render())
+        assertFalse(stream.hasNext())
+        assertEquals(emptyList(), SimpleRuntimeEngine.evaluateProgram(stream, context))
     }
 
     @Test

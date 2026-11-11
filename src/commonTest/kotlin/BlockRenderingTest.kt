@@ -1,4 +1,8 @@
 import dev.limebeck.templateEngine.*
+import dev.limebeck.templateEngine.inputStream.CharInputStream.StringPosition
+import dev.limebeck.templateEngine.inputStream.SimplePosition
+import dev.limebeck.templateEngine.parser.LanguageError
+import dev.limebeck.templateEngine.parser.LexerError
 import dev.limebeck.templateEngine.parser.ParserError
 import dev.limebeck.templateEngine.runtime.*
 import kotlinx.coroutines.CancellationException
@@ -52,6 +56,37 @@ class BlockRenderingTest {
                 "{{ let items = empty }}{{ endfor }}|{{ total }}|{{ for item in items }}bad{{ endfor }}",
             mapOf("items" to listOf("a", "b"), "empty" to emptyList<String>())
         ).getValueOrNull())
+    }
+
+    @Test
+    fun childScopesInheritValuesAndRestoreTemporaryLoopBindings() = runTest {
+        val renderer = object : Renderer {
+            override suspend fun render(templateName: String, context: RuntimeContext): Result<String, ParserError> =
+                Result.ofSuccess("")
+        }
+        val parent = mapOf("item" to "outer", "loop" to "outer loop", "items" to listOf("a"))
+            .wrapAll().asContext(renderer, StaticResourceLoader())
+        val child = parent.childScope()
+        assertSame(parent.renderer, child.renderer)
+        assertSame(parent.resourceLoader, child.resourceLoader)
+        assertEquals("outer", render(child.get("item")))
+
+        child.set("item", RuntimeObject.Null)
+        assertSame(RuntimeObject.Null, child.get("item"))
+        assertEquals("outer", render(parent.get("item")))
+        child.set("item", null)
+        assertEquals("outer", render(child.get("item")))
+
+        SimpleRuntimeEngine.evaluateProgram(
+            "{{ for item in items }}{{ let local = item }}{{ endfor }}".parseAst(), child
+        )
+        assertEquals("a", render(child.get("local")))
+        assertFailsWith<KoteRuntimeException> { parent.get("local") }
+        parent.set("item", "new outer".wrap())
+        parent.set("loop", "new loop".wrap())
+        assertEquals("new outer", render(child.get("item")))
+        assertEquals("new loop", render(child.get("loop")))
+        assertEquals("a", render(child.childScope().get("local")))
     }
 
     @Test
@@ -125,6 +160,80 @@ class BlockRenderingTest {
             "{{ if (true) }}A{{ for item in items }}{{ import 'row' }}{{ endfor }}B{{ endif }}".parseAst(), context)
         assertEquals("A<a><b>B", result.render())
         assertEquals(listOf("row", "row"), calls)
+    }
+
+    @Test
+    fun importsPropagateErrorsReturnedByCustomRenderers() = runTest {
+        val position = SimplePosition(3)
+        val lexerError = LexerError(position, "Invalid imported template")
+        val parserError = object : ParserError {
+            override val position = SimplePosition(8)
+            override val message = "Could not parse imported template"
+        }
+
+        for (error in listOf(lexerError, parserError)) {
+            val renderer = object : Renderer {
+                override suspend fun render(templateName: String, context: RuntimeContext): Result<String, ParserError> =
+                    Result.ofError(error)
+            }
+            val context = emptyMap<String, RuntimeObject>().asContext(renderer, StaticResourceLoader())
+            for (template in listOf("{{ import 'row' }}", "{{ if (true) }}{{ import 'row' }}{{ endif }}")) {
+                val actual = assertFailsWith<LexerError>(template) {
+                    SimpleRuntimeEngine.evaluateProgram(template.parseAst(), context)
+                }
+                assertEquals(error.position, actual.position)
+                assertEquals(error.message, actual.message)
+                if (error is Throwable) assertSame(error, actual)
+            }
+        }
+    }
+
+    @Test
+    fun diagnosticsIdentifyTheResourceThatFailedToParse() = runTest {
+        val renderer = KoTeRenderer(loader(mapOf(
+            "templates/unclosed.kote" to "{{ value",
+            "templates/invalid.kote" to "{{ @ }}",
+            "templates/main.kote" to "{{ import 'partials/broken.kote' }}",
+            "partials/broken.kote" to "{{ 1 + }}"
+        )))
+
+        val lexerError = assertFailsWith<LexerError> {
+            renderer.renderFromResource("templates/unclosed.kote", emptyMap())
+        }
+        assertEquals(SourceFile("templates/unclosed.kote", "unclosed.kote"), lexerError.sourceFile)
+        assertTrue(lexerError.message.startsWith("templates/unclosed.kote:1:9:"))
+        val languageError = assertFailsWith<LanguageError> {
+            renderer.renderFromResource("templates/invalid.kote", emptyMap())
+        }
+        assertEquals(SourceFile("templates/invalid.kote", "invalid.kote"), languageError.sourceFile)
+        assertTrue(languageError.message.startsWith("templates/invalid.kote:1:4:"))
+        val importedError = assertFailsWith<LexerError> {
+            renderer.renderFromResource("templates/main.kote", emptyMap())
+        }
+        assertEquals(SourceFile("partials/broken.kote", "broken.kote"), importedError.sourceFile)
+        assertTrue(importedError.message.startsWith("partials/broken.kote:1:10:"))
+        assertNull(assertFailsWith<LexerError> { renderer.render("{{ 1 + }}") }.sourceFile)
+    }
+
+    @Test
+    fun runtimeErrorsReportTheInnermostResourcePosition() = runTest {
+        val partial = "heading\n{{ 3 / 0 }}"
+        val renderer = KoTeRenderer(loader(mapOf(
+            "main.kote" to "{{ import 'partials/math.kote' }}",
+            "partials/math.kote" to partial,
+            "unclosed.kote" to "{{ if (true) }}\nlast"
+        )))
+
+        val error = assertFailsWith<KoteRuntimeException> {
+            renderer.renderFromResource("main.kote", emptyMap())
+        }
+        val file = SourceFile("partials/math.kote")
+        assertEquals(file, error.sourceFile)
+        assertEquals(StringPosition(partial.indexOf('/'), 2, 5, file), error.position)
+        assertEquals("partials/math.kote:2:6: Division by zero", error.message)
+
+        val eofError = assertFailsWith<LexerError> { renderer.renderFromResource("unclosed.kote", emptyMap()) }
+        assertTrue(eofError.message.startsWith("unclosed.kote:2:5:"))
     }
 
     @Test

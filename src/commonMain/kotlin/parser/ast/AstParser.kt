@@ -1,11 +1,15 @@
 package dev.limebeck.templateEngine.parser.ast
 
 import dev.limebeck.templateEngine.inputStream.InputStream
-import dev.limebeck.templateEngine.inputStream.RewindableInputStream
 import dev.limebeck.templateEngine.inputStream.peekOrNull
 import dev.limebeck.templateEngine.inputStream.toStream
 import dev.limebeck.templateEngine.parser.LanguageToken
 import dev.limebeck.templateEngine.parser.LexerError
+import dev.limebeck.templateEngine.parser.ParserContext
+import dev.limebeck.templateEngine.parser.TemplateLanguageTokens
+import dev.limebeck.templateEngine.parser.isLanguagePartEnd
+import dev.limebeck.templateEngine.parser.lexerError
+import dev.limebeck.templateEngine.parser.withSourceFile
 
 interface AstParser {
     fun parse(tokens: Sequence<LanguageToken>): AstRoot
@@ -13,31 +17,32 @@ interface AstParser {
 
 fun InputStream<LanguageToken>.throwErrorOnValue(expected: String): Nothing {
     val next = peekOrNull()
-    val isEof = !hasNext()
-    throw LexerError(
+    val actual = when {
+        next == null -> "EOF"
+        next.isLanguagePartEnd -> "end of template block"
+        else -> next.toString()
+    }
+    throw lexerError(
         position = next?.startPosition ?: currentPosition,
-        message = "<5665e901> Expected ${expected}, but got ${if (isEof) "EOF" else "$next"}"
+        message = "<5665e901> Expected $expected, but got $actual"
     )
 }
 
-private fun parseAstTree(stream: RewindableInputStream<LanguageToken>): List<AstLexeme> {
-
-    val astSequence = mutableListOf<AstLexeme>()
-
-    while (stream.hasNext()) {
-        astSequence.add(CoreAstParser.parse(stream))
-        if (stream.hasNext())
-            stream.next()
-    }
-
-    return astSequence
-}
-
-
 class KoTeAstParser : AstParser {
     override fun parse(tokens: Sequence<LanguageToken>): AstRoot {
-        val stream = tokens.toList().toStream()
-        val astSequence = parseAstTree(stream)
-        return AstRoot(body = astSequence)
+        val languageTokens = ((tokens as? TemplateLanguageTokens)?.withBlockEnds ?: tokens).toList()
+        val stream = languageTokens.toStream()
+        try {
+            val body = stream.parseBlockBody()
+            if (stream.hasNext()) stream.throwErrorOnValue("language construction")
+            return AstRoot(body)
+        } catch (error: LexerError) {
+            if (stream.hasNext() || error.position !== stream.currentPosition) throw error
+            val endPosition = languageTokens.lastOrNull()?.startPosition ?: throw error
+            throw lexerError(endPosition, error.message)
+        }
     }
+
+    fun parse(tokens: Sequence<LanguageToken>, context: ParserContext): AstRoot =
+        withSourceFile(context.file) { parse(tokens) }
 }

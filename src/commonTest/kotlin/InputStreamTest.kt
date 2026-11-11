@@ -1,7 +1,23 @@
+import dev.limebeck.templateEngine.inputStream.isNextSequenceEquals
 import dev.limebeck.templateEngine.inputStream.toStream
 import kotlin.test.*
 
 class InputStreamTest {
+    @Test
+    fun delimiterLookaheadDoesNotRewindTheCharacterStream() {
+        val stream = "prefix\n{{".toStream()
+        stream.seek(7)
+        val position = stream.currentPosition
+
+        assertTrue(stream.isNextSequenceEquals(listOf('{', '{')))
+        assertSame(position, stream.currentPosition)
+        assertFalse(stream.isNextSequenceEquals(listOf('{', '}')))
+        assertSame(position, stream.currentPosition)
+        assertFalse(stream.isNextSequenceEquals(listOf('{', '{', '{')))
+        assertSame(position, stream.currentPosition)
+        assertEquals('{', stream.next())
+    }
+
     @Test
     fun streamFromString() {
         val string = """

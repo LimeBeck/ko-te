@@ -4,23 +4,29 @@ import dev.limebeck.templateEngine.parser.ast.AstLexeme
 import dev.limebeck.templateEngine.runtime.RuntimeContext
 import dev.limebeck.templateEngine.runtime.KoteRuntimeException
 import dev.limebeck.templateEngine.runtime.RuntimeObject
+import dev.limebeck.templateEngine.runtime.withRuntimeLocation
 
 object CoreEvaluator : Evaluator<AstLexeme, RuntimeObject> {
-    override suspend fun eval(lexeme: AstLexeme, context: RuntimeContext): EvalResult<RuntimeObject> {
-        return when (lexeme) {
-            is AstLexeme.TemplateSource -> TemplateEvaluator.eval(lexeme, context)
-            is AstLexeme.Variable -> VariableAccessEvaluator.eval(lexeme, context)
-            is AstLexeme.Assign -> AssignEvaluator.eval(lexeme, context)
-            is AstLexeme.FunctionCall -> FunctionCallEvaluator.eval(lexeme, context)
-            is AstLexeme.KeyAccess -> KeyAccessEvaluator.eval(lexeme, context)
-            is AstLexeme.IndexAccess -> IndexAccessEvaluator.eval(lexeme, context)
-            is AstLexeme.Primitive -> ValueAccessEvaluator.eval(lexeme, context)
-            is AstLexeme.Conditional -> ConditionalEvaluator.eval(lexeme, context)
-            is AstLexeme.PrefixOperation -> UnaryOperationEvaluator.eval(lexeme, context)
-            is AstLexeme.InfixOperation -> OperationEvaluator.eval(lexeme, context)
-            is AstLexeme.Import -> ImportEvaluator.eval(lexeme, context)
-            is AstLexeme.Iterator -> IterableEvaluator.eval(lexeme, context)
-            else -> throw KoteRuntimeException("<2a2090f2> Can`t evaluate expression $lexeme")
+    override suspend fun eval(lexeme: AstLexeme, context: RuntimeContext): EvalResult<RuntimeObject> =
+        lexeme.streamPosition.withRuntimeLocation {
+            when (lexeme) {
+                is AstLexeme.TemplateSource -> TemplateEvaluator.eval(lexeme, context)
+                is AstLexeme.Variable -> VariableAccessEvaluator.eval(lexeme, context)
+                is AstLexeme.Assign -> AssignEvaluator.eval(lexeme, context)
+                is AstLexeme.FunctionCall -> FunctionCallEvaluator.eval(lexeme, context)
+                is AstLexeme.FunctionDeclaration -> {
+                    context.set(lexeme.name, RuntimeObject.TemplateFunction(lexeme, context))
+                    EvalResult(RuntimeObject.Nothing)
+                }
+                is AstLexeme.KeyAccess -> KeyAccessEvaluator.eval(lexeme, context)
+                is AstLexeme.IndexAccess -> IndexAccessEvaluator.eval(lexeme, context)
+                is AstLexeme.Primitive -> ValueAccessEvaluator.eval(lexeme, context)
+                is AstLexeme.Conditional -> ConditionalEvaluator.eval(lexeme, context)
+                is AstLexeme.PrefixOperation -> UnaryOperationEvaluator.eval(lexeme, context)
+                is AstLexeme.InfixOperation -> OperationEvaluator.eval(lexeme, context)
+                is AstLexeme.Import -> ImportEvaluator.eval(lexeme, context)
+                is AstLexeme.Iterator -> IterableEvaluator.eval(lexeme, context)
+                else -> throw KoteRuntimeException("<2a2090f2> Can`t evaluate expression $lexeme")
+            }
         }
-    }
 }

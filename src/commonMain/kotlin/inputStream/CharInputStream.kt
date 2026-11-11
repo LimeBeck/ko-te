@@ -1,5 +1,6 @@
 package dev.limebeck.templateEngine.inputStream
 
+import dev.limebeck.templateEngine.SourceFile
 import dev.limebeck.templateEngine.utls.cropForLog
 
 class CharInputStream(private val string: String) : RewindableInputStream<Char> {
@@ -11,6 +12,12 @@ class CharInputStream(private val string: String) : RewindableInputStream<Char> 
 
     private val stringLines by lazy {
         string.split('\n')
+    }
+
+    internal fun matchesNext(value: List<*>): Boolean {
+        val offset = position.absolutePosition
+        if (value.size > string.length - offset) return false
+        return value.withIndex().all { (index, char) -> string[offset + index] == char }
     }
 
     override fun peek(): Char {
@@ -73,7 +80,8 @@ class CharInputStream(private val string: String) : RewindableInputStream<Char> 
     data class StringPosition(
         override val absolutePosition: Int,
         val line: Int,
-        val column: Int
+        val column: Int,
+        override val sourceFile: SourceFile? = null
     ) : InputStream.Position {
         override fun copy(): InputStream.Position = this.copy(
             absolutePosition = absolutePosition,

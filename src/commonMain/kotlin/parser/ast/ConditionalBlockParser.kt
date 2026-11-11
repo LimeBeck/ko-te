@@ -56,14 +56,14 @@ object ConditionalBlockParser : AstLexemeParser<AstLexeme> {
                 }
 
                 return AstLexeme.Conditional(
-                    streamPosition = stream.currentPosition.copy(),
+                    streamPosition = nextToken.startPosition.copy(),
                     condition = condition,
                     then = thenValue,
                     another = elseValue
                 )
             }
             return AstLexeme.Conditional(
-                streamPosition = stream.currentPosition.copy(),
+                streamPosition = nextToken.startPosition.copy(),
                 condition = condition,
                 then = thenValue,
                 another = null

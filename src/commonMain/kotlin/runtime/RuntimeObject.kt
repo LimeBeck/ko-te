@@ -1,17 +1,38 @@
 package dev.limebeck.templateEngine.runtime
 
+import dev.limebeck.templateEngine.parser.ast.AstLexeme
+
 sealed interface RuntimeObject {
-    class CallableWrapper(
+    class CallableWrapper private constructor(
+        internal val parameterNames: List<String>?,
         val block: (args: List<RuntimeObject>, context: RuntimeContext) -> RuntimeObject
     ) : RuntimeObject {
+        constructor(block: (args: List<RuntimeObject>, context: RuntimeContext) -> RuntimeObject) : this(null, block)
+
         companion object {
             fun from(block: (args: List<RuntimeObject>, context: RuntimeContext) -> Any?): CallableWrapper {
                 return CallableWrapper { args: List<RuntimeObject>, context: RuntimeContext ->
                     block(args, context).wrap()
                 }
             }
+
+            fun from(
+                parameterNames: List<String>,
+                block: (args: List<RuntimeObject>, context: RuntimeContext) -> Any?
+            ): CallableWrapper {
+                val names = parameterNames.toList()
+                require(names.none { it.isBlank() } && names.toSet().size == names.size) {
+                    "Parameter names must be non-blank and unique"
+                }
+                return CallableWrapper(names) { args, context -> block(args, context).wrap() }
+            }
         }
     }
+
+    class TemplateFunction internal constructor(
+        internal val declaration: AstLexeme.FunctionDeclaration,
+        internal val closure: RuntimeContext
+    ) : RuntimeObject
 
     object Null : RuntimeObject
     object Nothing : RuntimeObject

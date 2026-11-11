@@ -25,9 +25,10 @@ object OperationParser : AstLexemeValueParser {
         stream: RewindableInputStream<LanguageToken>,
         prevExpression: AstLexeme.Expression
     ): AstLexeme.InfixOperation {
+        val position = stream.peekOrNull()?.startPosition ?: stream.currentPosition
         val operation = readOperation(stream) ?: stream.throwErrorOnValue("operation")
         val minimumPrecedence = operation.presence + if (operation.associativity == Associativity.LEFT) 1 else 0
         val right = ExpressionParser.parse(stream, minimumPrecedence)
-        return AstLexeme.InfixOperation(stream.currentPosition.copy(), prevExpression, right, operation)
+        return AstLexeme.InfixOperation(position.copy(), prevExpression, right, operation)
     }
 }

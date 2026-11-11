@@ -60,6 +60,10 @@ there is no implicit standard function set. Imports use the supplied `ResourceLo
 share the current render's variables. Import cycles and depth greater than 64 are rejected.
 Each top-level render has its own context and import stack.
 
+Register a callable with `CallableWrapper.from(listOf("left", "right")) { args, context -> ... }`
+to support calls such as `{{ combine(right = "B", left = "A") }}`. Positional arguments come
+first. The engine evaluates arguments in template order and passes values in parameter order.
+
 Pipe syntax and template inheritance are not implemented.
 
 ## Blocks
@@ -86,6 +90,16 @@ combined block output is plain text. No additional HTML escaping is applied.
 Since **0.4.0**, blocks render their complete output. In **0.3.0**, loops discarded their
 body output and conditions returned only the last result of the selected branch. This is an
 intentional compatibility change. See the [block specification](docs/BLOCKS.md) for examples and compatibility details.
+
+## Template functions
+
+```text
+{{ fun greet(name) }}Hello, {{ name }}!{{ endfun }}{{ greet("Ada") }}
+```
+
+The declaration emits no text. A call renders the body and returns its text. Parameters and
+assignments live in the call's local scope, with reads falling back to the declaration's scope.
+Calls can use positional or named arguments. `fun` and `endfun` are reserved keywords.
 
 ## Expressions and values
 

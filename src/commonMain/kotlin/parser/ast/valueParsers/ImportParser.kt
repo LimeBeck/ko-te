@@ -38,7 +38,7 @@ object ImportParser : AstLexemeParser<AstLexeme.Import> {
 
         return AstLexeme.Import(
             path = AstLexeme.String(path.startPosition.copy(), path.value),
-            streamPosition = stream.currentPosition.copy()
+            streamPosition = next.startPosition.copy()
         )
     }
 }

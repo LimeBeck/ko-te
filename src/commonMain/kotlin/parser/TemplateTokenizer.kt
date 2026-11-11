@@ -1,5 +1,6 @@
 package dev.limebeck.templateEngine.parser
 
+import dev.limebeck.templateEngine.SourceFile
 import dev.limebeck.templateEngine.inputStream.*
 
 interface TemplateTokenizer {
@@ -8,7 +9,8 @@ interface TemplateTokenizer {
 
 data class LexerError(
     override val position: InputStream.Position,
-    override val message: String
+    override val message: String,
+    override val sourceFile: SourceFile? = position.sourceFile
 ) : ParserError, Throwable(message)
 
 
@@ -19,59 +21,66 @@ class MustacheLikeTemplateTokenizer(
     init {
         require(delimiterStartSymbol.isNotEmpty() && delimiterEndSymbol.isNotEmpty())
     }
-    private fun RewindableInputStream<Char>.readLanguageParts(): List<TemplateToken.LanguagePart> {
-        skipNext(delimiterStartSymbol.asIterable().toList())
+
+    private val delimiterStart = delimiterStartSymbol.toList()
+    private val delimiterEnd = delimiterEndSymbol.toList()
+
+    private fun RewindableInputStream<Char>.readLanguageParts(file: SourceFile?): List<TemplateToken.LanguagePart> {
+        skipNext(delimiterStart)
         skipEmpty()
-        val startPosition = currentPosition.copy()
+        val startPosition = currentPosition.copy().withFile(file)
         val languageConstructions = buildString {
-            while (hasNext() && !isNextSequenceEquals(delimiterEndSymbol.toList())) {
-                if (peek() == '"' || peek() == '\'') append(readStringLiteral().source)
+            while (hasNext() && !isNextSequenceEquals(delimiterEnd)) {
+                if (peek() == '"' || peek() == '\'') append(readStringLiteral(currentPosition.withFile(file)).source)
                 else append(next())
             }
         }
 
-        if (!hasNext()) throw LexerError(currentPosition.copy(), "Unterminated template block: expected $delimiterEndSymbol")
-        skipNext(delimiterEndSymbol.asIterable().toList())
+        if (!hasNext()) {
+            throw lexerError(currentPosition.copy().withFile(file), "Unterminated template block: expected $delimiterEndSymbol")
+        }
+        skipNext(delimiterEnd)
 
         return listOf(
             TemplateToken.LanguagePart(
                 text = languageConstructions.trimEnd(),
                 startPosition = startPosition,
-                endPosition = currentPosition
+                endPosition = currentPosition.withFile(file)
             )
         )
     }
 
-    private fun RewindableInputStream<Char>.readRawTemplate(): TemplateToken.TemplateSource? {
-        val startPosition = currentPosition.copy()
+    private fun RewindableInputStream<Char>.readRawTemplate(file: SourceFile?): TemplateToken.TemplateSource? {
+        val startPosition = currentPosition.copy().withFile(file)
 
         val rawTemplate = readUntil {
-            !isNextSequenceEquals(delimiterStartSymbol.asIterable().toList())
+            !isNextSequenceEquals(delimiterStart)
         }
 
         return if (rawTemplate.isNotEmpty())
             TemplateToken.TemplateSource(
                 text = rawTemplate.joinToString(""),
                 startPosition = startPosition,
-                endPosition = currentPosition
+                endPosition = currentPosition.withFile(file)
             )
         else
             null
     }
 
-    override fun analyze(stream: RewindableInputStream<Char>): List<TemplateToken> {
-        val tokens = mutableListOf<TemplateToken>()
-        while (stream.hasNext()) {
-            stream.readRawTemplate()?.let {
-                tokens.add(it)
-            }
+    override fun analyze(stream: RewindableInputStream<Char>): List<TemplateToken> = analyze(stream, LexerContext())
 
-            if (stream.hasNext()) {
-                stream.readLanguageParts().let {
-                    tokens.addAll(it)
+    fun analyze(stream: RewindableInputStream<Char>, context: LexerContext): List<TemplateToken> =
+        withSourceFile(context.file) {
+            val tokens = mutableListOf<TemplateToken>()
+            while (stream.hasNext()) {
+                stream.readRawTemplate(context.file)?.let {
+                    tokens.add(it)
+                }
+
+                if (stream.hasNext()) {
+                    tokens.addAll(stream.readLanguageParts(context.file))
                 }
             }
+            tokens
         }
-        return tokens
-    }
 }

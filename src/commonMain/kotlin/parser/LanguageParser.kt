@@ -1,5 +1,6 @@
 package dev.limebeck.templateEngine.parser
 
+import dev.limebeck.templateEngine.SourceFile
 import dev.limebeck.templateEngine.inputStream.*
 
 interface LanguageParser {
@@ -8,12 +9,15 @@ interface LanguageParser {
 
 data class LanguageError(
     override val message: String,
-    override val position: InputStream.Position
+    override val position: InputStream.Position,
+    override val sourceFile: SourceFile? = position.sourceFile
 ) : ParserError, Throwable(message)
 
 class MustacheLikeLanguageParser : LanguageParser {
     companion object {
-        val KEYWORDS = listOf("if", "else", "endif", "for", "in", "endfor", "true", "false", "null", "let", "import")
+        val KEYWORDS = listOf(
+            "if", "else", "endif", "for", "in", "endfor", "true", "false", "null", "let", "import", "fun", "endfun"
+        )
         val PUNCTUATION = ",.;[]{}()".toList()
         val OPERATIONS = "+-*/%!<>=&".toList()
         val ALLOWED_STRING_DEFINITIONS = listOf("\"", "\"\"\"", "'")
@@ -23,7 +27,7 @@ class MustacheLikeLanguageParser : LanguageParser {
     private fun Char.isOperation(): Boolean = this in OPERATIONS
     private fun Char.isStringDef(): Boolean = this in listOf('"', '\'')
 
-    private fun parseLanguageToken(token: TemplateToken.LanguagePart): Sequence<LanguageToken> {
+    private fun parseLanguageToken(token: TemplateToken.LanguagePart, file: SourceFile?): Sequence<LanguageToken> {
         val stream = token.text.toStream()
 
         stream.skipEmpty()
@@ -32,11 +36,11 @@ class MustacheLikeLanguageParser : LanguageParser {
             while (stream.hasNext()) {
                 val local = stream.currentPosition
                 val base = token.startPosition as? CharInputStream.StringPosition
-                val position = if (base == null) token.startPosition else CharInputStream.StringPosition(
-                    base.absolutePosition + local.absolutePosition,
-                    base.line + local.line - 1,
-                    if (local.line == 1) base.column + local.column else local.column
-                )
+                val position = (base?.copy(
+                    absolutePosition = base.absolutePosition + local.absolutePosition,
+                    line = base.line + local.line - 1,
+                    column = if (local.line == 1) base.column + local.column else local.column
+                ) ?: token.startPosition).withFile(file)
                 val nextChar = stream.peek()
                 when {
                     nextChar.isOperation() -> {
@@ -48,7 +52,7 @@ class MustacheLikeLanguageParser : LanguageParser {
                         stream.next()
                     }
                     nextChar.isStringDef() -> {
-                        yield(LanguageToken.StringValue(stream.readStringLiteral().value, startPosition = position))
+                        yield(LanguageToken.StringValue(stream.readStringLiteral(position).value, startPosition = position))
                     }
                     nextChar.isDigit() -> {
                         var hasPointInside = false
@@ -58,7 +62,7 @@ class MustacheLikeLanguageParser : LanguageParser {
                                     hasPointInside = true
                                     return@readUntil true
                                 } else {
-                                    throw LanguageError(
+                                    throw languageError(
                                         position = position,
                                         message = "<1ac7d0b6> Unexpected point inside number ${token.text}"
                                     )
@@ -70,13 +74,13 @@ class MustacheLikeLanguageParser : LanguageParser {
                             LanguageToken.NumericValue(
                                 value = if (hasPointInside) {
                                     digit.toDoubleOrNull()?.takeIf { it.isFinite() }
-                                        ?: throw LanguageError("Invalid number: $digit", position)
+                                        ?: throw languageError("Invalid number: $digit", position)
                                 } else {
                                     digit.toIntOrNull() ?: digit.toLongOrNull()
-                                        ?: throw LanguageError("Integer is outside Long range: $digit", position)
+                                        ?: throw languageError("Integer is outside Long range: $digit", position)
                                 },
                                 startPosition = position
-                            )
+                            ).apply { isIntegerLiteral = !hasPointInside }
                         )
                     }
                     nextChar.isLetter() -> {
@@ -99,7 +103,7 @@ class MustacheLikeLanguageParser : LanguageParser {
                         }
                     }
                     else -> {
-                        throw LanguageError(
+                        throw languageError(
                             position = position,
                             message = "<4bf66c83> Unexpected token '${token.text}'"
                         )
@@ -111,19 +115,29 @@ class MustacheLikeLanguageParser : LanguageParser {
         }
     }
 
-    override suspend fun parse(tokens: Sequence<TemplateToken>): Sequence<LanguageToken> {
-        return sequence {
-            tokens.forEach { token ->
-                when (token) {
-                    is TemplateToken.TemplateSource -> yield(
-                        LanguageToken.TemplateSource(
-                            token.text,
-                            startPosition = token.startPosition
+    override suspend fun parse(tokens: Sequence<TemplateToken>): Sequence<LanguageToken> =
+        parse(tokens, LexerContext())
+
+    suspend fun parse(tokens: Sequence<TemplateToken>, context: LexerContext): Sequence<LanguageToken> =
+        TemplateLanguageTokens(sequence {
+            withSourceFile(context.file) {
+                tokens.forEach { token ->
+                    when (token) {
+                        is TemplateToken.TemplateSource -> yield(
+                            LanguageToken.TemplateSource(
+                                token.text,
+                                startPosition = token.startPosition.withFile(context.file)
+                            )
                         )
-                    )
-                    is TemplateToken.LanguagePart -> yieldAll(parseLanguageToken(token))
+                        is TemplateToken.LanguagePart -> yieldAll(parseLanguageToken(token, context.file))
+                    }
+                    yield(LanguageToken.Punctuation(LANGUAGE_PART_END, token.endPosition.withFile(context.file)))
                 }
             }
-        }
-    }
+        })
+}
+
+// AST parsing needs block boundaries. Iterating the public token sequence still yields just the tokens.
+internal class TemplateLanguageTokens(val withBlockEnds: Sequence<LanguageToken>) : Sequence<LanguageToken> {
+    override fun iterator(): Iterator<LanguageToken> = withBlockEnds.filterNot { it.isLanguagePartEnd }.iterator()
 }

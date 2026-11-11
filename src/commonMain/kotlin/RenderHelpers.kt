@@ -48,6 +48,7 @@ fun renderObjectToJson(objectWrapper: RuntimeObject.ObjectWrapper): String = ren
 fun render(value: RuntimeObject): String = when (value) {
     is RuntimeObject.StringWrapper -> value.string
     RuntimeObject.Nothing -> ""
-    is RuntimeObject.CallableWrapper -> throw KoteRuntimeException("Cannot render a callable; call it first")
+    is RuntimeObject.CallableWrapper, is RuntimeObject.TemplateFunction ->
+        throw KoteRuntimeException("Cannot render a callable; call it first")
     else -> renderJson(value)
 }

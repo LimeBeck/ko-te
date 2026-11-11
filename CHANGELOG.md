@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.7.0
+
+- Classify AST values as `AstLexeme.Literal` and `AstLexeme.Reference`. Primitive
+  literals and writable references retain their existing types.
+- Pass lexer and parser contexts containing the file name and path for resource templates.
+- Carry the source file and character position through template tokens, language tokens, and AST nodes.
+- Include the resource path, line, and column in syntax and evaluation diagnostics.
+- Support named arguments for callables that declare parameter names.
+- Allow runtime evaluators to consume an AST stream one node at a time.
+- Support child runtime scopes with inherited lookup and local assignments.
+- Declare template functions with `fun` and `endfun`. Calls render the body in a fresh
+  scope rooted in the declaration context. Exhaustive visitors should handle
+  `AstLexeme.FunctionDeclaration` and `RuntimeObject.TemplateFunction`.
+
+## 0.6.1
+
+- Keep adjacent template blocks separate when parsing expressions and statements.
+- Require an integer literal in list indices consistently across targets.
+- Compare template delimiters without rewinding the character stream.
+- Preserve errors returned by custom renderers when evaluating imports.
+- Accept keywords as object field names after a dot.
+- Require four hexadecimal digits in Unicode escapes.
+
 ## 0.6.0
 
 - Add unary `+`, `-` and `!`, including nested prefixes and adjacent binary/prefix

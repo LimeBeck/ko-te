@@ -19,7 +19,7 @@ object IdentifierParser : AstLexemeParser<AstLexeme.Variable> {
 
         return AstLexeme.Variable(
             name = next.name,
-            streamPosition = stream.currentPosition.copy()
+            streamPosition = next.startPosition.copy()
         )
     }
 }
